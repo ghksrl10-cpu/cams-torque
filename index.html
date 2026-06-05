@@ -434,10 +434,13 @@ function judge(base,meas){
 function onBase(el){ const r=cur(),v=el.value.trim(); if(v==='')delete r.base[el.dataset.sec][el.dataset.col]; else r.base[el.dataset.sec][el.dataset.col]=v; persist(); render(); }
 function fillAllBase(){
   const rec=cur(); if(!rec) return;
-  const v=(prompt('비어있는 기준값을 이 값으로 채웁니다 (단위 kgf 자동).\n예: 13~20', '13~20')||'').trim();
+  const v=(prompt('모든 기준값을 이 값으로 채웁니다 (특수값 35~51, 20~25 제외)\n예: 13~20', '13~20')||'').trim();
   if(!v) return;
-  ['FRT','RR'].forEach(k=>COLS.forEach(c=>{ if(!rec.base[k][c]) rec.base[k][c]=v; }));
-  if(!rec.base.SUB['서브1']) rec.base.SUB['서브1']=v;
+  const SPECIAL=['35~51','20~25','35~51kgf','20~25kgf'];
+  ['FRT','RR'].forEach(k=>COLS.forEach(c=>{
+    if(!SPECIAL.includes(rec.base[k][c])) rec.base[k][c]=v;
+  }));
+  if(!SPECIAL.includes(rec.base.SUB['서브1'])) rec.base.SUB['서브1']=v;
   persist(); render();
 }
 function onMeas(el){ const r=cur(),v=el.value.trim(); if(v==='')delete r.meas[el.dataset.sec][el.dataset.col]; else r.meas[el.dataset.sec][el.dataset.col]=v; persist(); render(); }
