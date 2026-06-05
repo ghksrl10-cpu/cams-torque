@@ -6,9 +6,9 @@
 <title>범퍼 조립 토크 측정 관리</title>
 <style>
   :root{
-    --bd:#e3e7ee; --line:#eef1f6; --hd:#f1f4f9; --hd2:#e8edf4; --blue:#2563eb; --blue2:#1d4ed8;
-    --ok:#16a34a; --okbg:#dcfce7; --ng:#dc2626; --ngbg:#fee2e2; --mut:#6b7280; --ink:#111827;
-    --side:#ffffff; --bg:#f4f6fa;
+    --bd:#2a2d35; --line:#23262f; --hd:#1a1d24; --hd2:#20232b; --blue:#3b82f6; --blue2:#2563eb;
+    --ok:#22c55e; --okbg:#052e16; --ng:#ef4444; --ngbg:#2d0a0a; --mut:#9ca3af; --ink:#f1f5f9;
+    --side:#13151c; --bg:#0f1117;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:"맑은 고딕","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
@@ -18,11 +18,11 @@
   .app{display:flex;min-height:100vh}
   .side{width:230px;background:var(--side);border-right:1px solid var(--bd);position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:30}
   .brand{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid var(--line)}
-  .brand .logo{width:38px;height:38px;border-radius:10px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .brand .logo{width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
   .brand b{font-size:15px} .brand small{display:block;color:var(--mut);font-size:12px;margin-top:1px}
   .nav{padding:10px;flex:1}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:9px;cursor:pointer;color:#374151;font-weight:600;font-size:15px;margin-bottom:3px}
-  .nav-item:hover{background:#f3f4f6}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:9px;cursor:pointer;color:#94a3b8;font-weight:600;font-size:15px;margin-bottom:3px}
+  .nav-item:hover{background:#20232b}
   .nav-item.active{background:var(--blue);color:#fff}
   .nav-item .ic{width:20px;text-align:center}
   .side-foot{padding:14px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;color:#374151}
@@ -35,33 +35,33 @@
   .page-h .sub{color:var(--mut);font-size:14px;width:100%;margin-top:-6px}
   .grow{flex:1}
 
-  .btn{padding:9px 14px;border:1px solid var(--bd);border-radius:9px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#374151}
-  .btn:hover{background:#f7f8fa}
+  .btn{padding:9px 14px;border:1px solid var(--bd);border-radius:9px;background:#20232b;cursor:pointer;font-size:14px;font-weight:600;color:#e2e8f0}
+  .btn:hover{background:#2a2d35}
   .btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)} .btn.pri:hover{background:var(--blue2)}
   .save-note{font-size:13px;color:var(--mut)} .save-note b{color:var(--ok)}
 
   /* ===== 카드/통계 ===== */
   .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-  .card{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:16px 18px}
+  .card{background:#1a1d24;border:1px solid var(--bd);border-radius:14px;padding:16px 18px}
   .card .ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:10px}
   .card .num{font-size:30px;font-weight:800;line-height:1} .card .lab{color:var(--mut);font-size:13px;margin-top:6px}
   .ic.b{background:#dbeafe;color:#2563eb} .ic.g{background:var(--okbg);color:var(--ok)}
   .ic.r{background:var(--ngbg);color:var(--ng)} .ic.y{background:#fef3c7;color:#b45309}
   .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
-  .chart-box{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:16px}
+  .chart-box{background:#1a1d24;border:1px solid var(--bd);border-radius:14px;padding:16px}
   .chart-box h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:7px}
   .cv-wrap{position:relative;height:260px}
 
   /* ===== 입력 표 ===== */
   .tabs{display:flex;gap:8px;margin-bottom:14px}
-  .tab{padding:11px 22px;border:1px solid var(--bd);background:#fff;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;color:#374151}
+  .tab{padding:11px 22px;border:1px solid var(--bd);background:#1a1d24;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;color:#cbd5e1}
   .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#1a1d24;border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
   .bar label{font-weight:700;color:#374151}
-  .bar input,.bar select{padding:8px;border:1px solid var(--bd);border-radius:8px;font-size:15px}
+  .bar input,.bar select{padding:8px;border:1px solid var(--bd);border-radius:8px;font-size:15px;background:#0f1117;color:#f1f5f9}
   .date-in{width:64px;text-align:center}
   .hint{font-size:13px;color:var(--mut);margin:0 0 12px;line-height:1.5}
-  .sec{background:#fff;border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .sec{background:#1a1d24;border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden}
   .sec-h{background:var(--hd);padding:9px 14px;font-weight:800;font-size:16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
   .sec-h .stat{font-size:13px;font-weight:600;color:var(--mut)}
   .scroll{overflow-x:auto}
@@ -69,8 +69,8 @@
   th,td{border:1px solid var(--bd);padding:0;text-align:center;height:46px}
   .rowlab{background:var(--hd2);font-weight:700;width:62px;position:sticky;left:0;z-index:2}
   th{background:var(--hd2);font-weight:700;font-size:15px}
-  td input{width:100%;height:100%;border:0;text-align:center;font-size:15px;background:transparent;outline:none}
-  td input:focus{background:#eef4ff}
+  td input{width:100%;height:100%;border:0;text-align:center;font-size:15px;background:transparent;outline:none;color:#f1f5f9}
+  td input:focus{background:#1e2a3a}
   .meas-in{font-weight:700;font-size:16px}
   td.off{background:#f5f6f8} td.off input{background:#f5f6f8}
   td.ok{background:var(--okbg)} td.ok .meas-in{color:var(--ok)}
@@ -84,8 +84,8 @@
   #dashPhotos .ph img{width:100%;height:auto;max-height:none;border:1px solid var(--bd);border-radius:8px;cursor:pointer}
 
   /* ===== 이력 ===== */
-  .hist-item{display:flex;align-items:center;gap:8px;padding:14px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;cursor:pointer;background:#fff}
-  .hist-item:hover{background:#eef4ff;border-color:#c7d7fb}
+  .hist-item{display:flex;align-items:center;gap:8px;padding:14px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;cursor:pointer;background:#1a1d24}
+  .hist-item:hover{background:#20283a;border-color:#3b82f6}
   .badge{font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px}
   .badge.line{background:#e0e7ff;color:var(--blue2)}
   .rep-head{font-size:16px;font-weight:700;margin:10px 0}
@@ -95,7 +95,7 @@
   .rep-area td.ng{background:var(--ngbg);color:var(--ng);font-weight:700}
   .rep-tools{display:flex;gap:8px;margin-bottom:12px}
 
-  #overlay{position:fixed;inset:0;background:rgba(255,255,255,.93);display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:700;color:#374151;z-index:80;padding:20px;line-height:1.6}
+  #overlay{position:fixed;inset:0;background:rgba(15,17,23,.95);display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:700;color:#f1f5f9;z-index:80;padding:20px;line-height:1.6}
 
   /* ===== 모바일 ===== */
   .hamb{display:none}
@@ -128,8 +128,24 @@
   <!-- 사이드바 -->
   <aside class="side" id="side">
     <div class="brand">
-      <div class="logo">토크</div>
-      <div><b>토크 측정 관리</b><small>주식회사 캠스</small></div>
+      <div class="logo">
+        <svg viewBox="0 0 100 100" width="46" height="46" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="cc"><circle cx="50" cy="50" r="49"/></clipPath>
+          </defs>
+          <!-- 검정 배경 원 -->
+          <circle cx="50" cy="50" r="49" fill="#111"/>
+          <!-- 빨간 가로 띠 -->
+          <rect x="0" y="36" width="100" height="28" fill="#dd0000" clip-path="url(#cc)"/>
+          <!-- AMS 흰 글자 -->
+          <text x="91" y="58" text-anchor="end" fill="white"
+            font-family="Arial Black,Impact,sans-serif"
+            font-weight="900" font-size="24" letter-spacing="-1">AMS</text>
+          <!-- 파란 C 원호 — 맨 앞 레이어 -->
+          <path d="M 81 19 A 44 44 0 1 0 81 81" fill="none" stroke="#1414cc" stroke-width="15" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div><b>토크 측정 관리</b><small>주식회사 캠스</small><small>생산팀 조립 · 김환기PM</small></div>
     </div>
     <nav class="nav">
       <div class="nav-item active" data-view="dash" onclick="showView('dash')"><span class="ic">🏠</span> 메인</div>
@@ -270,6 +286,15 @@ const SECTIONS = [
 
 let curLine='1LINE', curRecId='', DB={'1LINE':{records:{}},'2LINE':{records:{}}}, db=null;
 let SETTINGS={dashPhotos:[]};
+const ADMIN_PIN='103518';
+let _authed=false;
+function checkAdmin(){
+  if(_authed) return true;
+  const v=prompt('🔒 관리자 비밀번호를 입력하세요');
+  if(v===ADMIN_PIN){ _authed=true; setTimeout(()=>_authed=false, 30*60*1000); return true; }
+  if(v!==null) alert('비밀번호가 틀렸습니다.');
+  return false;
+}
 
 /* ===== Firebase ===== */
 function fbInit(){
@@ -498,6 +523,7 @@ function renderDashPhotos(){
 }
 async function addDashPhoto(input){
   const f=input.files[0]; if(!f) return;
+  if(!checkAdmin()){ input.value=''; return; }
   SETTINGS.dashPhotos=SETTINGS.dashPhotos||[];
   if(SETTINGS.dashPhotos.length>=6){ alert('고정 사진은 최대 6장까지.'); input.value=''; return; }
   try{
@@ -511,6 +537,7 @@ async function addDashPhoto(input){
 }
 async function delDashPhoto(i){
   if(!SETTINGS.dashPhotos||!SETTINGS.dashPhotos[i]) return;
+  if(!checkAdmin()) return;
   if(!confirm('이 고정 사진을 삭제할까요?')) return;
   SETTINGS.dashPhotos.splice(i,1); await saveSettings(); renderDashPhotos();
 }
