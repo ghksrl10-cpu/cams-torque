@@ -3,30 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>범퍼 조립 토크 측정</title>
+<title>범퍼 조립 토크 측정 관리</title>
 <style>
   :root{
-    --bd:#b9c0cc; --hd:#e9edf3; --hd2:#dfe5ee; --blue:#1d4ed8;
-    --ok:#15803d; --okbg:#dcfce7; --ng:#b91c1c; --ngbg:#fee2e2; --mut:#6b7280;
+    --bd:#e3e7ee; --line:#eef1f6; --hd:#f1f4f9; --hd2:#e8edf4; --blue:#2563eb; --blue2:#1d4ed8;
+    --ok:#16a34a; --okbg:#dcfce7; --ng:#dc2626; --ngbg:#fee2e2; --mut:#6b7280; --ink:#111827;
+    --side:#ffffff; --bg:#f4f6fa;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:"맑은 고딕","Malgun Gothic",system-ui,sans-serif;background:#f3f4f6;color:#111;font-size:15px}
-  .wrap{max-width:1400px;margin:0 auto;padding:10px 10px 60px}
-  h1{font-size:20px;margin:6px 0 12px;display:flex;align-items:center;gap:8px}
-  h1::before{content:"■";color:#111}
-  .tabs{display:flex;gap:6px;margin-bottom:10px}
-  .tab{flex:1;padding:12px;border:1px solid var(--bd);background:#fff;border-radius:10px;font-size:17px;font-weight:700;cursor:pointer;text-align:center;color:#374151}
+  body{margin:0;font-family:"맑은 고딕","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+  a{color:inherit}
+
+  /* ===== 레이아웃 ===== */
+  .app{display:flex;min-height:100vh}
+  .side{width:230px;background:var(--side);border-right:1px solid var(--bd);position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:30}
+  .brand{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid var(--line)}
+  .brand .logo{width:38px;height:38px;border-radius:10px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .brand b{font-size:15px} .brand small{display:block;color:var(--mut);font-size:12px;margin-top:1px}
+  .nav{padding:10px;flex:1}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:9px;cursor:pointer;color:#374151;font-weight:600;font-size:15px;margin-bottom:3px}
+  .nav-item:hover{background:#f3f4f6}
+  .nav-item.active{background:var(--blue);color:#fff}
+  .nav-item .ic{width:20px;text-align:center}
+  .side-foot{padding:14px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;color:#374151}
+  .side-foot .av{width:32px;height:32px;border-radius:50%;background:#e0e7ff;color:var(--blue2);display:flex;align-items:center;justify-content:center;font-weight:800}
+  .side-foot small{display:block;color:var(--mut);font-size:12px}
+
+  .main{flex:1;margin-left:230px;padding:20px 24px 70px;max-width:1500px}
+  .page-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 18px}
+  .page-h h1{font-size:23px;margin:0}
+  .page-h .sub{color:var(--mut);font-size:14px;width:100%;margin-top:-6px}
+  .grow{flex:1}
+
+  .btn{padding:9px 14px;border:1px solid var(--bd);border-radius:9px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#374151}
+  .btn:hover{background:#f7f8fa}
+  .btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)} .btn.pri:hover{background:var(--blue2)}
+  .save-note{font-size:13px;color:var(--mut)} .save-note b{color:var(--ok)}
+
+  /* ===== 카드/통계 ===== */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:16px 18px}
+  .card .ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:10px}
+  .card .num{font-size:30px;font-weight:800;line-height:1} .card .lab{color:var(--mut);font-size:13px;margin-top:6px}
+  .ic.b{background:#dbeafe;color:#2563eb} .ic.g{background:var(--okbg);color:var(--ok)}
+  .ic.r{background:var(--ngbg);color:var(--ng)} .ic.y{background:#fef3c7;color:#b45309}
+  .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+  .chart-box{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:16px}
+  .chart-box h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:7px}
+  .cv-wrap{position:relative;height:260px}
+
+  /* ===== 입력 표 ===== */
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{padding:11px 22px;border:1px solid var(--bd);background:#fff;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;color:#374151}
   .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:10px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
   .bar label{font-weight:700;color:#374151}
   .bar input,.bar select{padding:8px;border:1px solid var(--bd);border-radius:8px;font-size:15px}
   .date-in{width:64px;text-align:center}
-  .grow{flex:1}
-  .btn{padding:9px 14px;border:1px solid var(--bd);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#374151}
-  .btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .hint{font-size:13px;color:var(--mut);margin:2px 0 10px;line-height:1.5}
-  .sec{background:#fff;border:1px solid var(--bd);border-radius:10px;margin-bottom:12px;overflow:hidden}
-  .sec-h{background:var(--hd);padding:8px 12px;font-weight:800;font-size:16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+  .hint{font-size:13px;color:var(--mut);margin:0 0 12px;line-height:1.5}
+  .sec{background:#fff;border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .sec-h{background:var(--hd);padding:9px 14px;font-weight:800;font-size:16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
   .sec-h .stat{font-size:13px;font-weight:600;color:var(--mut)}
   .scroll{overflow-x:auto}
   table{border-collapse:collapse;width:100%;min-width:760px}
@@ -36,94 +72,178 @@
   td input{width:100%;height:100%;border:0;text-align:center;font-size:15px;background:transparent;outline:none}
   td input:focus{background:#eef4ff}
   .meas-in{font-weight:700;font-size:16px}
-  td.has{background:#fff}
-  td.off{background:#f1f3f6} td.off input{background:#f1f3f6}
+  td.off{background:#f5f6f8} td.off input{background:#f5f6f8}
   td.ok{background:var(--okbg)} td.ok .meas-in{color:var(--ok)}
   td.ng{background:var(--ngbg)} td.ng .meas-in{color:var(--ng)}
   .unit{font-size:12px;color:var(--mut)}
-  .save-note{font-size:13px;color:var(--mut)} .save-note b{color:var(--ok)}
-  /* 사진 */
   .photos{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
   .ph{position:relative}
   .ph img{width:130px;height:98px;object-fit:cover;border:1px solid var(--bd);border-radius:8px;cursor:pointer}
   .ph .del{position:absolute;top:-7px;right:-7px;background:#fff;border:1px solid var(--bd);border-radius:50%;width:24px;height:24px;cursor:pointer;font-weight:700;color:var(--ng)}
-  .filelab{display:inline-block}
-  /* 이력 모달 */
-  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;align-items:flex-start;justify-content:center;padding:18px;overflow:auto}
-  .modal-box{background:#fff;border-radius:12px;max-width:1200px;width:100%;padding:14px}
-  .modal-head{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;margin-bottom:10px}
-  .hist-line{font-weight:800;margin:14px 0 6px;color:var(--blue);font-size:16px}
-  .hist-item{display:flex;align-items:center;gap:8px;padding:13px;border:1px solid var(--bd);border-radius:8px;margin-bottom:6px;cursor:pointer}
-  .hist-item:hover{background:#eef4ff}
+  #dashPhotos{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  #dashPhotos .ph img{width:100%;height:auto;max-height:none;border:1px solid var(--bd);border-radius:8px;cursor:pointer}
+
+  /* ===== 이력 ===== */
+  .hist-item{display:flex;align-items:center;gap:8px;padding:14px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;cursor:pointer;background:#fff}
+  .hist-item:hover{background:#eef4ff;border-color:#c7d7fb}
+  .badge{font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .badge.line{background:#e0e7ff;color:var(--blue2)}
   .rep-head{font-size:16px;font-weight:700;margin:10px 0}
   .rep-sec{margin-bottom:10px}
   .rep-sech{background:var(--hd);font-weight:800;padding:6px 10px;border:1px solid var(--bd);border-bottom:0}
   .rep-area td.ok{background:var(--okbg);color:var(--ok);font-weight:700}
   .rep-area td.ng{background:var(--ngbg);color:var(--ng);font-weight:700}
-  .rep-tools{display:flex;gap:8px;margin-bottom:10px}
-  #overlay{position:fixed;inset:0;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:700;color:#374151;z-index:80;padding:20px;line-height:1.6}
-  @media (max-width:560px){ body{font-size:14px} h1{font-size:17px} }
+  .rep-tools{display:flex;gap:8px;margin-bottom:12px}
+
+  #overlay{position:fixed;inset:0;background:rgba(255,255,255,.93);display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:700;color:#374151;z-index:80;padding:20px;line-height:1.6}
+
+  /* ===== 모바일 ===== */
+  .hamb{display:none}
+  @media (max-width:820px){
+    .side{transform:translateX(-100%);transition:.25s;box-shadow:0 0 30px rgba(0,0,0,.15)}
+    .side.open{transform:translateX(0)}
+    .main{margin-left:0;padding:14px 14px 70px}
+    .hamb{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid var(--bd);border-radius:10px;background:#fff;font-size:20px;cursor:pointer}
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .charts{grid-template-columns:1fr}
+    .page-h h1{font-size:19px}
+    .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:25}
+    .scrim.show{display:block}
+  }
   @media print{
+    .side,.page-h .btn,.rep-tools,.hamb{display:none}
+    .main{margin:0}
     body *{visibility:hidden}
     #repArea,#repArea *{visibility:visible}
     #repArea{position:absolute;left:0;top:0;width:100%}
-    .rep-tools,.btn{display:none}
     table{min-width:0!important}
   }
 </style>
 </head>
 <body>
 <div id="overlay">불러오는 중…</div>
-<div class="wrap">
-  <h1 id="title">범퍼 조립 토크 측정</h1>
+<div class="scrim" id="scrim" onclick="toggleNav(false)"></div>
 
-  <div class="tabs">
-    <div class="tab active" data-line="1LINE" onclick="switchLine('1LINE')">◎ 조립 1LINE</div>
-    <div class="tab" data-line="2LINE" onclick="switchLine('2LINE')">◎ 조립 2LINE</div>
-  </div>
+<div class="app">
+  <!-- 사이드바 -->
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="logo">토크</div>
+      <div><b>토크 측정 관리</b><small>주식회사 캠스</small></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" data-view="dash" onclick="showView('dash')"><span class="ic">🏠</span> 메인</div>
+      <div class="nav-item" data-view="input" onclick="showView('input')"><span class="ic">✏️</span> 측정 입력</div>
+      <div class="nav-item" data-view="history" onclick="showView('history')"><span class="ic">📋</span> 이력 조회</div>
+    </nav>
+    <div class="side-foot">
+      <div class="av">김</div>
+      <div><b>김환기</b><small>캠스 담당자</small></div>
+    </div>
+  </aside>
 
-  <div class="bar">
-    <label>측정일</label>
-    <input class="date-in" id="dy" type="number" inputmode="numeric"> 년
-    <input class="date-in" id="dm" type="number" inputmode="numeric"> 월
-    <input class="date-in" id="dd" type="number" inputmode="numeric"> 일
-    <span class="grow"></span>
-    <label>기록</label>
-    <select id="recSel" onchange="loadRecord(this.value)"></select>
-    <button class="btn" onclick="newRecord()">＋ 새 기록</button>
-  </div>
-  <div class="bar">
-    <button class="btn pri" onclick="saveNow()">💾 저장</button>
-    <button class="btn" onclick="reloadFromServer()">🔄 새로고침</button>
-    <button class="btn" onclick="openHistory()">📋 이력 보기</button>
-    <button class="btn" onclick="exportCSV()">엑셀(CSV)</button>
-    <span class="grow"></span>
-    <span class="save-note" id="saveNote"></span>
-  </div>
-  <div class="hint">
-    · <b>기준값</b>을 직접 고치세요(예: 13~20). 비우면 그 위치는 측정 안 함(회색).<br>
-    · <b>실측</b>엔 숫자만. kgf 자동. 기준 안=초록(OK), 벗어남=빨강(NG).<br>
-    · 입력·사진은 <b>클라우드에 자동 저장</b>됩니다. 폰·PC 어디서 열어도 같은 데이터. 다른 기기 입력은 🔄새로고침으로 반영.
-  </div>
+  <!-- 본문 -->
+  <main class="main">
 
-  <div id="sections"></div>
+    <!-- 대시보드 -->
+    <section class="view" id="view-dash">
+      <div class="page-h">
+        <button class="hamb" onclick="toggleNav(true)">☰</button>
+        <h1>메인</h1>
+        <span class="grow"></span>
+        <button class="btn" onclick="reloadFromServer()">🔄 새로고침</button>
+        <div class="sub">전체 토크 측정 현황을 한눈에 확인하세요</div>
+      </div>
+      <div class="chart-box" style="margin-bottom:18px">
+        <h3>📷 메인 사진
+          <span class="grow"></span>
+          <label class="btn pri" style="font-size:13px;padding:6px 12px">＋ 사진 추가<input type="file" accept="image/*" style="display:none" onchange="addDashPhoto(this)"></label>
+        </h3>
+        <img id="builtinPhoto" src="ref.jpg" style="width:100%;border:1px solid var(--bd);border-radius:8px;margin-bottom:10px;cursor:pointer" onclick="window.open('ref.jpg','_blank')" onerror="this.style.display='none'">
+        <div id="dashPhotos"></div>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="charts">
+        <div class="chart-box"><h3>📈 월별 측정 추이 (OK / NG)</h3><div class="cv-wrap"><canvas id="cM"></canvas></div></div>
+        <div class="chart-box"><h3>🥧 합부 비율</h3><div class="cv-wrap"><canvas id="cD"></canvas></div></div>
+      </div>
+      <div class="charts" style="margin-top:14px;grid-template-columns:1fr 1fr">
+        <div class="chart-box"><h3>🏭 라인별 OK / NG</h3><div class="cv-wrap"><canvas id="cL"></canvas></div></div>
+        <div class="chart-box"><h3>📌 안내</h3>
+          <div class="hint" style="font-size:14px;line-height:1.8">
+            · 측정값 입력은 왼쪽 <b>✏️ 측정 입력</b> 메뉴에서 합니다.<br>
+            · 과거 기록·사진·인쇄는 <b>📋 이력 조회</b> 메뉴에서 봅니다.<br>
+            · 모든 데이터는 클라우드에 자동 저장되어 폰·PC 어디서나 같이 보입니다.<br>
+            · 측정 단위는 <b>kgf</b> 고정입니다.
+          </div>
+        </div>
+      </div>
+      <div class="chart-box" style="margin-top:14px">
+        <h3>⚠️ 과체결 손상 한계 기준 (참고)</h3>
+        <div class="scroll"><table style="min-width:520px">
+          <tr><th>체결부</th><th>한계 토크</th><th>초과 시 증상</th></tr>
+          <tr><td>6mm 볼트 + 너트스프링</td><td><b>58 kgf·cm</b> 이상</td><td>변형 / 백화</td></tr>
+          <tr><td>도금용 ABS</td><td><b>51 kgf·cm</b> 이상</td><td>터짐</td></tr>
+          <tr><td>5mm 볼트 + 너트스프링</td><td><b>68 kgf·cm</b> 이상</td><td>변형 / 백화</td></tr>
+          <tr><td>5mm 스크류</td><td><b>22 kgf·cm</b> 이상</td><td>굴곡</td></tr>
+          <tr><td>4mm 스크류</td><td><b>22 kgf·cm</b> 이상</td><td>굴곡</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- 측정 입력 -->
+    <section class="view" id="view-input" style="display:none">
+      <div class="page-h">
+        <button class="hamb" onclick="toggleNav(true)">☰</button>
+        <h1 id="inTitle">측정 입력</h1>
+        <span class="grow"></span>
+        <span class="save-note" id="saveNote"></span>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-line="1LINE" onclick="switchLine('1LINE')">◎ 조립 1LINE</div>
+        <div class="tab" data-line="2LINE" onclick="switchLine('2LINE')">◎ 조립 2LINE</div>
+      </div>
+      <div class="bar">
+        <label>측정일</label>
+        <input class="date-in" id="dy" type="number" inputmode="numeric"> 년
+        <input class="date-in" id="dm" type="number" inputmode="numeric"> 월
+        <input class="date-in" id="dd" type="number" inputmode="numeric"> 일
+        <span class="grow"></span>
+        <label>기록(월)</label>
+        <select id="recSel" onchange="loadRecord(this.value)"></select>
+        <button class="btn" onclick="newRecord()">＋ 새 기록</button>
+        <button class="btn" onclick="fillAllBase()">기준값 전체채우기</button>
+        <button class="btn pri" onclick="saveNow()">💾 저장</button>
+        <button class="btn" onclick="exportCSV()">엑셀(CSV)</button>
+      </div>
+      <div class="hint">
+        · <b>기준값</b>을 직접 고치세요(예: 13~20). 비우면 그 위치는 측정 안 함(회색).
+        · <b>실측</b>엔 숫자만 입력 → kgf 자동, 기준 안=초록(OK)/벗어남=빨강(NG).
+      </div>
+      <div id="sections"></div>
+    </section>
+
+    <!-- 이력 조회 -->
+    <section class="view" id="view-history" style="display:none">
+      <div class="page-h">
+        <button class="hamb" onclick="toggleNav(true)">☰</button>
+        <h1>이력 조회</h1>
+        <span class="grow"></span>
+        <button class="btn" onclick="reloadFromServer()">🔄 새로고침</button>
+        <div class="sub">월별 측정 기록을 보고, 필요하면 인쇄(PDF)할 수 있습니다</div>
+      </div>
+      <div id="histList"></div>
+      <div id="histDetail"></div>
+    </section>
+
+  </main>
 </div>
 
-<!-- 이력 보기 모달 -->
-<div id="histModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-head">📋 측정 이력 <span class="grow"></span>
-      <button class="btn" onclick="closeHistory()">닫기 ✕</button></div>
-    <div id="histList"></div>
-    <div id="histDetail"></div>
-  </div>
-</div>
-
-<!-- ===== Firebase (구글 무료 클라우드) ===== -->
+<!-- Firebase + Chart.js -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-/* ▼▼▼ [설치] 여기에 본인 Firebase 설정을 붙여넣으세요. 설치방법.txt 참고 ▼▼▼ */
 const firebaseConfig = {
   apiKey: "AIzaSyDZZSI3ib_rmGz4gSMe0DgZs650IuTCvKs",
   authDomain: "cams-torque.firebaseapp.com",
@@ -132,23 +252,15 @@ const firebaseConfig = {
   messagingSenderId: "404254094434",
   appId: "1:404254094434:web:b4193a15de4153b9aa0d3b"
 };
-/* ▲▲▲ 여기까지만 바꾸면 됩니다 ▲▲▲ */
 </script>
 
 <script>
 const COLS = ['101','102','103','111','121','131','141','151','161','171','181','191'];
 const SUBCOLS = ['서브1','서브2','서브3','서브4'];
+function allBase(special){ const o={}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 const DEFAULT_BASE = {
-  '1LINE':{
-    FRT:{'103':'13~20','111':'13~20','121':'13~20','131':'13~20','141':'13~20','151':'13~20'},
-    SUB:{'서브1':'20~25'},
-    RR :{'102':'13~20','111':'13~20','121':'13~20','131':'13~20','161':'13~20'}
-  },
-  '2LINE':{
-    FRT:{'102':'13~20','103':'35~51','111':'13~20','121':'13~20','141':'13~20','151':'13~20','171':'13~20'},
-    SUB:{'서브1':'13~20'},
-    RR :{'102':'13~20','103':'13~20','111':'35~51','131':'13~20','141':'13~20','171':'13~20'}
-  }
+  '1LINE':{ FRT:allBase(),                 SUB:{'서브1':'20~25'}, RR:allBase() },
+  '2LINE':{ FRT:allBase({'103':'35~51'}), SUB:{'서브1':'13~20'}, RR:allBase({'111':'35~51'}) }
 };
 const SECTIONS = [
   {key:'FRT', label:'FRT', cols:COLS},
@@ -156,48 +268,35 @@ const SECTIONS = [
   {key:'RR',  label:'RR',  cols:COLS},
 ];
 
-let curLine='1LINE', curRecId='', DB={'1LINE':{records:{}},'2LINE':{records:{}}};
-let db=null;
+let curLine='1LINE', curRecId='', DB={'1LINE':{records:{}},'2LINE':{records:{}}}, db=null;
+let SETTINGS={dashPhotos:[]};
 
-/* ===== Firebase 초기화 ===== */
+/* ===== Firebase ===== */
 function fbInit(){
-  if(firebaseConfig.apiKey.indexOf('여기에')===0){
-    showOverlay('⚠️ Firebase 설정이 비어 있습니다.<br>index.html 위쪽 firebaseConfig 에<br>본인 설정을 붙여넣고 다시 올려주세요.<br>(설치방법.txt 참고)');
-    return false;
-  }
-  try{
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-    return true;
-  }catch(e){ showOverlay('Firebase 연결 오류:<br>'+e.message); return false; }
+  if(firebaseConfig.apiKey.indexOf('여기에')===0){ showOverlay('⚠️ Firebase 설정이 비어 있습니다.<br>index.html 의 firebaseConfig 를 채워주세요.'); return false; }
+  try{ firebase.initializeApp(firebaseConfig); db=firebase.firestore(); return true; }
+  catch(e){ showOverlay('Firebase 연결 오류:<br>'+e.message); return false; }
 }
 function showOverlay(html){ const o=document.getElementById('overlay'); o.innerHTML=html; o.style.display='flex'; }
 function hideOverlay(){ document.getElementById('overlay').style.display='none'; }
-
 async function loadAll(){
-  const snap = await db.collection('records').get();
+  const snap=await db.collection('records').get();
   DB={'1LINE':{records:{}},'2LINE':{records:{}}};
-  snap.forEach(d=>{
-    const v=d.data(); if(!DB[v.line]) return;
-    DB[v.line].records[v.ym]={
-      date:v.date||{y:'',m:'',d:''},
-      base:v.base||{FRT:{},SUB:{},RR:{}},
-      meas:v.meas||{FRT:{},SUB:{},RR:{}},
-      photos:v.photos||[]
-    };
-  });
+  snap.forEach(d=>{ const v=d.data(); if(!DB[v.line])return;
+    DB[v.line].records[v.ym]={date:v.date||{y:'',m:'',d:''},base:v.base||{FRT:{},SUB:{},RR:{}},meas:v.meas||{FRT:{},SUB:{},RR:{}},photos:v.photos||[]}; });
+  try{ const sdoc=await db.collection('settings').doc('dashboard').get(); SETTINGS = sdoc.exists?(sdoc.data()||{}):{}; }catch(e){ SETTINGS={}; }
+  if(!SETTINGS.dashPhotos) SETTINGS.dashPhotos=[];
 }
+async function saveSettings(){ if(!db) return; await db.collection('settings').doc('dashboard').set(SETTINGS); }
 async function saveRecord(line,id){
   const rec=DB[line].records[id]; if(!rec||!db) return;
   await db.collection('records').doc(line+'_'+id).set({
     line, ym:id, date:rec.date, base:rec.base, meas:rec.meas, photos:rec.photos||[],
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   });
 }
-
-/* ===== 자동 저장(디바운스) ===== */
 let saveTimer=null, saving=false, dirty=false;
-function note(html){ document.getElementById('saveNote').innerHTML=html; }
+function note(html){ const n=document.getElementById('saveNote'); if(n)n.innerHTML=html; }
 function persist(){ dirty=true; note('저장 대기…'); if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(flush,800); }
 async function flush(){
   if(!dirty||saving||!curRecId) return; saving=true; dirty=false; note('저장 중…');
@@ -206,10 +305,24 @@ async function flush(){
   saving=false; if(dirty){ if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(flush,800); }
 }
 
+/* ===== 뷰 전환 ===== */
+function showView(v){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===v));
+  document.querySelectorAll('.view').forEach(p=>p.style.display='none');
+  document.getElementById('view-'+v).style.display='block';
+  if(v==='dash') renderDash();
+  if(v==='history') openHistory();
+  if(v==='input') render();
+  toggleNav(false);
+}
+function toggleNav(open){
+  document.getElementById('side').classList.toggle('open',open);
+  document.getElementById('scrim').classList.toggle('show',open);
+}
+
 /* ===== 기록 ===== */
 function blankRecord(line){ return { date:{y:'',m:'',d:''}, base:JSON.parse(JSON.stringify(DEFAULT_BASE[line])), meas:{FRT:{},SUB:{},RR:{}}, photos:[] }; }
 function latestRecord(line){ const ids=Object.keys(DB[line].records).sort(); return ids.length?DB[line].records[ids[ids.length-1]]:null; }
-
 function switchLine(line){
   curLine=line;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.line===line));
@@ -234,14 +347,13 @@ function newRecord(silent){
   if(!DB[curLine].records[id]){
     const rec=blankRecord(curLine); const prev=latestRecord(curLine);
     if(prev) rec.base=JSON.parse(JSON.stringify(prev.base));
-    rec.date={y:String(y),m:String(m),d:''}; DB[curLine].records[id]=rec;
-    curRecId=id; persist();
+    rec.date={y:String(y),m:String(m),d:''}; DB[curLine].records[id]=rec; curRecId=id; persist();
   }
   refreshRecSelect(); loadRecord(id);
 }
 function loadRecord(id){
   if(!id||!DB[curLine].records[id]) return;
-  curRecId=id; document.getElementById('recSel').value=id;
+  curRecId=id; const sel=document.getElementById('recSel'); if(sel)sel.value=id;
   const rec=DB[curLine].records[id];
   document.getElementById('dy').value=rec.date.y||id.split('-')[0];
   document.getElementById('dm').value=rec.date.m||(+id.split('-')[1]);
@@ -250,11 +362,13 @@ function loadRecord(id){
 }
 function cur(){ return DB[curLine].records[curRecId]; }
 
-/* ===== 렌더링 ===== */
+/* ===== 입력 표 ===== */
 function render(){
-  document.getElementById('title').textContent=((document.getElementById('dy').value||'')+'').slice(2)+'년 범퍼 조립 토크 측정';
-  const rec=cur(); if(!rec) return;
-  const root=document.getElementById('sections'); root.innerHTML='';
+  const rec=cur();
+  const tt=document.getElementById('inTitle');
+  if(tt) tt.textContent='측정 입력 · 조립 '+curLine;
+  if(!rec) return;
+  const root=document.getElementById('sections'); if(!root) return; root.innerHTML='';
   SECTIONS.forEach(sec=>{
     let cols=sec.cols;
     if(sec.key==='SUB'){ cols=SUBCOLS.filter(c=>rec.base.SUB[c]!==undefined); if(!cols.length)cols=['서브1']; }
@@ -262,7 +376,9 @@ function render(){
     const cells=cols.map(c=>{
       const base=rec.base[sec.key][c]??'', meas=rec.meas[sec.key][c]??'';
       const st=judge(base,meas); if(base!=='')cnt++; if(st==='ok')okc++; if(st==='ng')ngc++;
-      return {c,base,meas,cls:base===''?'off':(st||'has')};
+      return {c,base,meas,
+        cls: base===''?'off':(st||''),
+        measCls: base===''?(meas!==''?'':'off'):(st||'')};
     });
     const div=document.createElement('div'); div.className='sec';
     div.innerHTML=`
@@ -270,17 +386,15 @@ function render(){
       <div class="scroll"><table>
         <tr><td class="rowlab">구분</td>${cells.map(x=>`<th>${x.c}</th>`).join('')}</tr>
         <tr><td class="rowlab">기준값</td>${cells.map(x=>`<td class="${x.cls}"><input data-sec="${sec.key}" data-col="${x.c}" value="${x.base}" placeholder="13~20" onchange="onBase(this)"></td>`).join('')}</tr>
-        <tr><td class="rowlab">실측</td>${cells.map(x=>`<td class="${x.cls}"><input class="meas-in" data-sec="${sec.key}" data-col="${x.c}" type="number" inputmode="decimal" value="${x.meas}" ${x.base===''?'disabled':''} onchange="onMeas(this)"></td>`).join('')}</tr>
+        <tr><td class="rowlab">실측</td>${cells.map(x=>`<td class="${x.measCls}"><input class="meas-in" data-sec="${sec.key}" data-col="${x.c}" type="number" inputmode="decimal" value="${x.meas}" onchange="onMeas(this)"></td>`).join('')}</tr>
       </table></div>`;
     root.appendChild(div);
   });
-  // 사진 카드
-  const pc=document.createElement('div'); pc.className='sec';
   const photos=rec.photos||[];
+  const pc=document.createElement('div'); pc.className='sec';
   pc.innerHTML=`<div class="sec-h">📷 사진 <span class="stat">측정 사진 첨부 (${photos.length}장)</span></div>
     <div style="padding:12px">
-      <label class="btn pri filelab">＋ 사진 촬영 / 추가
-        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(this)"></label>
+      <label class="btn pri">＋ 사진 촬영 / 추가<input type="file" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(this)"></label>
       <div class="photos">${photos.map((p,i)=>`<div class="ph"><img src="${p.url}" onclick="window.open('${p.url}','_blank')"><div class="del" onclick="delPhoto(${i})">✕</div></div>`).join('')}</div>
     </div>`;
   root.appendChild(pc);
@@ -293,76 +407,124 @@ function judge(base,meas){
   const lo=Math.min(+m[1],+m[2]), hi=Math.max(+m[1],+m[2]); return (v>=lo&&v<=hi)?'ok':'ng';
 }
 function onBase(el){ const r=cur(),v=el.value.trim(); if(v==='')delete r.base[el.dataset.sec][el.dataset.col]; else r.base[el.dataset.sec][el.dataset.col]=v; persist(); render(); }
+function fillAllBase(){
+  const rec=cur(); if(!rec) return;
+  const v=(prompt('비어있는 기준값을 이 값으로 채웁니다 (단위 kgf 자동).\n예: 13~20', '13~20')||'').trim();
+  if(!v) return;
+  ['FRT','RR'].forEach(k=>COLS.forEach(c=>{ if(!rec.base[k][c]) rec.base[k][c]=v; }));
+  if(!rec.base.SUB['서브1']) rec.base.SUB['서브1']=v;
+  persist(); render();
+}
 function onMeas(el){ const r=cur(),v=el.value.trim(); if(v==='')delete r.meas[el.dataset.sec][el.dataset.col]; else r.meas[el.dataset.sec][el.dataset.col]=v; persist(); render(); }
 ['dy','dm','dd'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
-  const r=cur(); if(!r)return; r.date={y:document.getElementById('dy').value,m:document.getElementById('dm').value,d:document.getElementById('dd').value}; persist(); if(id==='dy')render();
+  const r=cur(); if(!r)return; r.date={y:document.getElementById('dy').value,m:document.getElementById('dm').value,d:document.getElementById('dd').value}; persist();
 }));
-
 async function saveNow(){ if(saveTimer)clearTimeout(saveTimer); await flush(); alert('저장되었습니다.'); }
 async function reloadFromServer(){
   showOverlay('새로고침 중…');
-  try{ await loadAll(); switchLine(curLine); }catch(e){ alert('불러오기 실패: '+e.message); }
-  hideOverlay();
+  try{ await loadAll(); switchLine(curLine); const cur=document.querySelector('.nav-item.active'); showView(cur?cur.dataset.view:'dash'); }
+  catch(e){ alert('불러오기 실패: '+e.message); } hideOverlay();
 }
 
-/* ===== 사진 (압축해서 Firestore에 저장 — 결제수단 불필요) ===== */
-function compressImage(file, maxDim, quality){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=()=>{
-      const img=new Image();
-      img.onload=()=>{
-        let w=img.width, h=img.height;
-        if(w>=h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
-        else if(h>w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
-        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-        cv.getContext('2d').drawImage(img,0,0,w,h);
-        resolve(cv.toDataURL('image/jpeg', quality));
-      };
-      img.onerror=reject; img.src=reader.result;
-    };
-    reader.onerror=reject; reader.readAsDataURL(file);
-  });
-}
+/* ===== 사진 ===== */
+function compressImage(file,maxDim,q){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(w>=h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}else if(h>w&&h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',q));};img.onerror=rej;img.src=r.result;};r.onerror=rej;r.readAsDataURL(file);});}
 async function addPhoto(input){
-  const f=input.files[0]; if(!f) return;
-  const rec=cur(); if(!rec){ input.value=''; return; }
+  const f=input.files[0]; if(!f) return; const rec=cur(); if(!rec){input.value='';return;}
   rec.photos=rec.photos||[];
-  if(rec.photos.length>=8){ alert('사진은 한 기록(월)에 최대 8장까지 넣을 수 있어요.'); input.value=''; return; }
+  if(rec.photos.length>=8){ alert('사진은 한 기록(월)에 최대 8장까지.'); input.value=''; return; }
   note('사진 처리 중…');
   try{
-    const dataUrl=await compressImage(f, 1024, 0.55);
-    rec.photos.push({url:dataUrl, name:f.name});
+    const dataUrl=await compressImage(f,1024,0.55); rec.photos.push({url:dataUrl,name:f.name});
     const total=rec.photos.reduce((s,p)=>s+(p.url?p.url.length:0),0);
-    if(total>900000){ rec.photos.pop(); alert('사진 용량이 가득 찼습니다.\n기존 사진을 지우고 추가하거나, 다음 달 기록으로 나눠 담으세요.'); note(''); input.value=''; return; }
-    await saveRecord(curLine,curRecId);
-    note('<b>사진 추가됨</b>'); render();
+    if(total>900000){ rec.photos.pop(); alert('사진 용량이 가득 찼습니다. 기존 사진을 지우고 추가하세요.'); note(''); input.value=''; return; }
+    render(); note('<b>사진 추가됨</b>');                       // 화면에 즉시 표시
+    saveRecord(curLine,curRecId).catch(e=>{ note('클라우드 저장 실패'); alert('클라우드 저장 실패(사진은 화면엔 보임):\n'+e.message); });
   }catch(e){ alert('사진 처리 실패: '+e.message); note(''); }
   input.value='';
 }
-async function delPhoto(i){
-  const rec=cur(); if(!rec||!rec.photos[i]) return;
-  if(!confirm('이 사진을 삭제할까요?')) return;
-  rec.photos.splice(i,1); await saveRecord(curLine,curRecId); render();
+async function delPhoto(i){ const rec=cur(); if(!rec||!rec.photos[i])return; if(!confirm('이 사진을 삭제할까요?'))return; rec.photos.splice(i,1); await saveRecord(curLine,curRecId); render(); }
+
+/* ===== 대시보드 ===== */
+let chM=null,chD=null,chL=null;
+function computeStats(){
+  const months={}; let ok=0,ng=0,meas=0,recCount=0;
+  const lineStats={'1LINE':{ok:0,ng:0},'2LINE':{ok:0,ng:0}};
+  ['1LINE','2LINE'].forEach(line=>{
+    Object.keys(DB[line].records).forEach(ym=>{
+      recCount++; const rec=DB[line].records[ym];
+      SECTIONS.forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{
+        const mv=rec.meas[s.key][c];
+        if(mv!==undefined&&mv!==''){ meas++; const st=judge(rec.base[s.key][c],mv);
+          months[ym]=months[ym]||{ok:0,ng:0};
+          if(st==='ok'){ok++;lineStats[line].ok++;months[ym].ok++;}
+          else if(st==='ng'){ng++;lineStats[line].ng++;months[ym].ng++;}
+        }
+      }));
+    });
+  });
+  return {months,ok,ng,meas,recCount,lineStats};
+}
+function renderDash(){
+  const s=computeStats();
+  const rate = s.meas? Math.round(s.ok/s.meas*100) : 0;
+  document.getElementById('cards').innerHTML=`
+    <div class="card"><div class="ic b">📋</div><div class="num">${s.recCount}</div><div class="lab">측정 기록(월) 수</div></div>
+    <div class="card"><div class="ic y">🔧</div><div class="num">${s.meas}</div><div class="lab">총 측정 건수</div></div>
+    <div class="card"><div class="ic g">✓</div><div class="num">${s.ok}</div><div class="lab">합격 OK (${rate}%)</div></div>
+    <div class="card"><div class="ic r">✕</div><div class="num">${s.ng}</div><div class="lab">불합격 NG</div></div>`;
+  const ms=Object.keys(s.months).sort();
+  const lbl=ms.map(m=>m.replace('-','.'));
+  const okD=ms.map(m=>s.months[m].ok), ngD=ms.map(m=>s.months[m].ng);
+  if(chM)chM.destroy(); if(chD)chD.destroy(); if(chL)chL.destroy();
+  const C=window.Chart; if(!C) return;
+  chM=new C(document.getElementById('cM'),{type:'bar',data:{labels:lbl.length?lbl:['데이터 없음'],datasets:[
+    {label:'OK',data:okD,backgroundColor:'#16a34a',borderRadius:5},
+    {label:'NG',data:ngD,backgroundColor:'#dc2626',borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{position:'bottom'}}}});
+  chD=new C(document.getElementById('cD'),{type:'doughnut',data:{labels:['OK','NG'],datasets:[{data:[s.ok,s.ng||0],backgroundColor:['#16a34a','#dc2626']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  chL=new C(document.getElementById('cL'),{type:'bar',data:{labels:['1LINE','2LINE'],datasets:[
+    {label:'OK',data:[s.lineStats['1LINE'].ok,s.lineStats['2LINE'].ok],backgroundColor:'#16a34a',borderRadius:5},
+    {label:'NG',data:[s.lineStats['1LINE'].ng,s.lineStats['2LINE'].ng],backgroundColor:'#dc2626',borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{position:'bottom'}}}});
+  renderDashPhotos();
+}
+function renderDashPhotos(){
+  const el=document.getElementById('dashPhotos'); if(!el) return;
+  const ps=SETTINGS.dashPhotos||[];
+  el.innerHTML = ps.length
+    ? ps.map((p,i)=>`<div class="ph"><img src="${p.url}" onclick="window.open('${p.url}','_blank')"><div class="del" onclick="delDashPhoto(${i})">✕</div></div>`).join('')
+    : '<div class="hint">＋ 사진 추가 버튼으로 설비·공정 기준 사진(라인 배치도 등)을 올려두면 여기에 고정 표시됩니다.</div>';
+}
+async function addDashPhoto(input){
+  const f=input.files[0]; if(!f) return;
+  SETTINGS.dashPhotos=SETTINGS.dashPhotos||[];
+  if(SETTINGS.dashPhotos.length>=6){ alert('고정 사진은 최대 6장까지.'); input.value=''; return; }
+  try{
+    const dataUrl=await compressImage(f,1400,0.6); SETTINGS.dashPhotos.push({url:dataUrl,name:f.name});
+    const total=SETTINGS.dashPhotos.reduce((s,p)=>s+(p.url?p.url.length:0),0);
+    if(total>950000){ SETTINGS.dashPhotos.pop(); alert('사진 용량이 가득 찼습니다. 기존 고정 사진을 지우고 추가하세요.'); input.value=''; return; }
+    renderDashPhotos();                       // 화면에 즉시 표시
+    saveSettings().catch(e=>alert('클라우드 저장 실패(사진은 화면엔 보임):\n'+e.message));
+  }catch(e){ alert('사진 처리 실패: '+e.message); }
+  input.value='';
+}
+async function delDashPhoto(i){
+  if(!SETTINGS.dashPhotos||!SETTINGS.dashPhotos[i]) return;
+  if(!confirm('이 고정 사진을 삭제할까요?')) return;
+  SETTINGS.dashPhotos.splice(i,1); await saveSettings(); renderDashPhotos();
 }
 
-/* ===== 이력 보기 ===== */
-function countRec(rec){
-  let ok=0,ng=0,cnt=0;
-  SECTIONS.forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{
-    cnt++; const st=judge(rec.base[s.key][c],rec.meas[s.key][c]); if(st==='ok')ok++; if(st==='ng')ng++;
-  }));
-  return {ok,ng,cnt};
-}
+/* ===== 이력 조회 ===== */
+function countRec(rec){ let ok=0,ng=0,cnt=0; SECTIONS.forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{cnt++;const st=judge(rec.base[s.key][c],rec.meas[s.key][c]);if(st==='ok')ok++;if(st==='ng')ng++;})); return{ok,ng,cnt}; }
 function openHistory(){
   let html='';
   ['1LINE','2LINE'].forEach(line=>{
     const ids=Object.keys(DB[line].records).sort().reverse();
-    if(!ids.length) return;
-    html+=`<div class="hist-line">◎ 조립 ${line}</div>`;
     ids.forEach(id=>{
       const rec=DB[line].records[id], n=countRec(rec), np=(rec.photos||[]).length;
       html+=`<div class="hist-item" onclick="viewRecord('${line}','${id}')">
+        <span class="badge line">${line}</span>
         <b>${id.replace('-','년 ')}월</b>
         <span class="unit">측정일 ${rec.date.m||'-'}/${rec.date.d||'-'}</span>
         <span class="grow"></span>
@@ -370,10 +532,9 @@ function openHistory(){
         <span class="unit">(기준 ${n.cnt}곳${np?' · 📷'+np:''})</span> ›</div>`;
     });
   });
-  document.getElementById('histList').innerHTML = html || '<div class="hint">아직 저장된 기록이 없습니다.</div>';
-  document.getElementById('histDetail').innerHTML='';
+  document.getElementById('histList').innerHTML = html || '<div class="hint">아직 저장된 기록이 없습니다. 측정 입력 메뉴에서 값을 입력하세요.</div>';
   document.getElementById('histList').style.display='block';
-  document.getElementById('histModal').style.display='flex';
+  document.getElementById('histDetail').innerHTML='';
 }
 function viewRecord(line,id){
   document.getElementById('histList').style.display='none';
@@ -385,14 +546,12 @@ function viewRecord(line,id){
      <div id="repArea" class="rep-area">${buildStatic(line,id)}</div>`;
 }
 function backToList(){ document.getElementById('histDetail').innerHTML=''; document.getElementById('histList').style.display='block'; }
-function closeHistory(){ document.getElementById('histModal').style.display='none'; }
 function buildStatic(line,id){
   const rec=DB[line].records[id]; if(!rec) return '';
   let html=`<div class="rep-head">■ ${(rec.date.y||id.split('-')[0]).toString().slice(2)}년 범퍼 조립 토크 측정 · 조립 ${line}<br>
     측정일 : ${rec.date.y||id.split('-')[0]}년 ${rec.date.m||(+id.split('-')[1])}월 ${rec.date.d||''}일 &nbsp;<span class="unit">(단위: kgf)</span></div>`;
   SECTIONS.forEach(sec=>{
-    const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined);
-    if(!cols.length) return;
+    const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined); if(!cols.length) return;
     const cells=cols.map(c=>{ const base=rec.base[sec.key][c]||'', meas=rec.meas[sec.key][c]??'', st=judge(base,meas); return {c,base,meas,st}; });
     html+=`<div class="rep-sec"><div class="rep-sech">${sec.label}</div><div class="scroll"><table>
       <tr><td class="rowlab">구분</td>${cells.map(x=>`<th>${x.c}</th>`).join('')}</tr>
@@ -402,10 +561,7 @@ function buildStatic(line,id){
     </table></div></div>`;
   });
   const photos=rec.photos||[];
-  if(photos.length){
-    html+=`<div class="rep-sec"><div class="rep-sech">📷 사진</div><div class="photos" style="padding:8px">
-      ${photos.map(p=>`<div class="ph"><img src="${p.url}" onclick="window.open('${p.url}','_blank')"></div>`).join('')}</div></div>`;
-  }
+  if(photos.length){ html+=`<div class="rep-sec"><div class="rep-sech">📷 사진</div><div class="photos" style="padding:8px">${photos.map(p=>`<div class="ph"><img src="${p.url}" onclick="window.open('${p.url}','_blank')"></div>`).join('')}</div></div>`; }
   return html;
 }
 
@@ -429,8 +585,12 @@ function exportCSV(){
 /* ===== 시작 ===== */
 (async function init(){
   if(!fbInit()) return;
-  try{ await loadAll(); }catch(e){ showOverlay('데이터 불러오기 실패:<br>'+e.message+'<br><br>Firestore가 켜져 있는지 확인하세요.'); return; }
-  switchLine('1LINE');
+  try{ await loadAll(); }catch(e){ showOverlay('데이터 불러오기 실패:<br>'+e.message); return; }
+  // 입력 기본 라인 세팅(렌더는 숨김 상태에서 준비)
+  curLine='1LINE';
+  const ids=Object.keys(DB['1LINE'].records).sort();
+  if(ids.length) loadRecord(ids[ids.length-1]); else newRecord(true);
+  showView('dash');
   hideOverlay();
 })();
 </script>
