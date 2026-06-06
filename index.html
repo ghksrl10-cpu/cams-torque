@@ -275,14 +275,24 @@ const COLS = ['101','102','103','111','121','131','141','151','161','171','181',
 const SUBCOLS = ['서브1','서브2','서브3','서브4'];
 function allBase(special){ const o={}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 const DEFAULT_BASE = {
-  '1LINE':{ FRT:allBase(),                 SUB:{'서브1':'20~25'}, RR:allBase() },
+  '1LINE':{
+    FRT:allBase({'101':'','102':'','161':'','171':'','181':''}),
+    SUB:{'서브1':'20~25'},
+    RR:allBase({'101':'','103':'','151':'','161':'','171':'','181':'','191':'20~30'})
+  },
   '2LINE':{ FRT:allBase({'103':'35~51'}), SUB:{'서브1':'13~20'}, RR:allBase({'111':'35~51'}) }
 };
-const SECTIONS = [
+const SECTIONS_1LINE = [
+  {key:'SUB', label:'서브', cols:SUBCOLS},
+  {key:'FRT', label:'FRT', cols:COLS},
+  {key:'RR',  label:'RR',  cols:COLS},
+];
+const SECTIONS_2LINE = [
   {key:'FRT', label:'FRT', cols:COLS},
   {key:'SUB', label:'서브', cols:SUBCOLS},
   {key:'RR',  label:'RR',  cols:COLS},
 ];
+function getSections(line){ return line==='1LINE'?SECTIONS_1LINE:SECTIONS_2LINE; }
 
 let curLine='1LINE', curRecId='', DB={'1LINE':{records:{}},'2LINE':{records:{}}}, db=null;
 let SETTINGS={dashPhotos:[]};
@@ -394,7 +404,7 @@ function render(){
   if(tt) tt.textContent='측정 입력 · 조립 '+curLine;
   if(!rec) return;
   const root=document.getElementById('sections'); if(!root) return; root.innerHTML='';
-  SECTIONS.forEach(sec=>{
+  getSections(curLine).forEach(sec=>{
     let cols=sec.cols;
     if(sec.key==='SUB'){ cols=SUBCOLS.filter(c=>rec.base.SUB[c]!==undefined); if(!cols.length)cols=['서브1']; }
     let okc=0,ngc=0,cnt=0;
@@ -436,9 +446,10 @@ function fillAllBase(){
   const rec=cur(); if(!rec) return;
   const v=(prompt('모든 기준값을 이 값으로 채웁니다 (특수값 35~51, 20~25 제외)\n예: 13~20', '13~20')||'').trim();
   if(!v) return;
-  const SPECIAL=['35~51','20~25','35~51kgf','20~25kgf'];
+  const SPECIAL=['35~51','20~25','35~51kgf','20~25kgf','20~30'];
   ['FRT','RR'].forEach(k=>COLS.forEach(c=>{
-    if(!SPECIAL.includes(rec.base[k][c])) rec.base[k][c]=v;
+    const cv=rec.base[k][c];
+    if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base[k][c]=v;
   }));
   if(!SPECIAL.includes(rec.base.SUB['서브1'])) rec.base.SUB['서브1']=v;
   persist(); render();
@@ -480,7 +491,8 @@ function computeStats(){
   ['1LINE','2LINE'].forEach(line=>{
     Object.keys(DB[line].records).forEach(ym=>{
       recCount++; const rec=DB[line].records[ym];
-      SECTIONS.forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{
+      getSections(line).forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{
+        if(rec.base[s.key][c]==='') return;
         const mv=rec.meas[s.key][c];
         if(mv!==undefined&&mv!==''){ meas++; const st=judge(rec.base[s.key][c],mv);
           months[ym]=months[ym]||{ok:0,ng:0};
@@ -546,7 +558,7 @@ async function delDashPhoto(i){
 }
 
 /* ===== 이력 조회 ===== */
-function countRec(rec){ let ok=0,ng=0,cnt=0; SECTIONS.forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{cnt++;const st=judge(rec.base[s.key][c],rec.meas[s.key][c]);if(st==='ok')ok++;if(st==='ng')ng++;})); return{ok,ng,cnt}; }
+function countRec(line,rec){ let ok=0,ng=0,cnt=0; getSections(line).forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{if(rec.base[s.key][c]==='')return;cnt++;const st=judge(rec.base[s.key][c],rec.meas[s.key][c]);if(st==='ok')ok++;if(st==='ng')ng++;})); return{ok,ng,cnt}; }
 function openHistory(){
   // 모든 월 목록 수집 (1LINE + 2LINE 합침)
   const allYms=new Set();
@@ -567,7 +579,7 @@ function openHistory(){
     let lineRows='';
     ['1LINE','2LINE'].forEach(line=>{
       const rec=DB[line].records[ym]; if(!rec) return;
-      const n=countRec(rec), np=(rec.photos||[]).length;
+      const n=countRec(line,rec), np=(rec.photos||[]).length;
       const d=rec.date.d?` · ${rec.date.m||ym.split('-')[1]}/${rec.date.d}`:'';
       lineRows+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid var(--line)">
         <span class="badge line" style="font-size:11px">${line}</span>
@@ -624,8 +636,8 @@ function buildStatic(line,id){
   const rec=DB[line].records[id]; if(!rec) return '';
   let html=`<div class="rep-head">■ ${(rec.date.y||id.split('-')[0]).toString().slice(2)}년 범퍼 조립 토크 측정 · 조립 ${line}<br>
     측정일 : ${rec.date.y||id.split('-')[0]}년 ${rec.date.m||(+id.split('-')[1])}월 ${rec.date.d||''}일 &nbsp;<span class="unit">(단위: kgf)</span></div>`;
-  SECTIONS.forEach(sec=>{
-    const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined); if(!cols.length) return;
+  getSections(line).forEach(sec=>{
+    const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined && rec.base[sec.key][c]!==''); if(!cols.length) return;
     const cells=cols.map(c=>{ const base=rec.base[sec.key][c]||'', meas=rec.meas[sec.key][c]??'', st=judge(base,meas); return {c,base,meas,st}; });
     html+=`<div class="rep-sec"><div class="rep-sech">${sec.label}</div><div class="scroll"><table>
       <tr><td class="rowlab">구분</td>${cells.map(x=>`<th>${x.c}</th>`).join('')}</tr>
@@ -643,7 +655,7 @@ function buildStatic(line,id){
 function exportCSV(){
   const rec=cur(); if(!rec){alert('기록 없음');return;}
   let rows=[['라인',curLine],['측정일',`${rec.date.y}-${rec.date.m}-${rec.date.d}`],['단위','kgf'],[]];
-  SECTIONS.forEach(sec=>{
+  getSections(curLine).forEach(sec=>{
     const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined); if(!cols.length)return;
     rows.push([sec.label]); rows.push(['구분',...cols]);
     rows.push(['기준값(kgf)',...cols.map(c=>rec.base[sec.key][c]||'')]);
@@ -676,6 +688,7 @@ function autoMeasVal(base, seed){
   if(lo===13&&hi===20){ lo=15.0; hi=18.0; }
   if(lo===35&&hi===51){ lo=39.0; hi=46.0; }
   if(lo===20&&hi===25){ lo=21.0; hi=23.0; }
+  if(lo===20&&hi===30){ lo=22.0; hi=28.0; }
   const h=Math.abs((seed*1103515245+12345)&0x7fffffff);
   const tenths=Math.round(lo*10)+(h%Math.round((hi-lo)*10+1));
   return (tenths/10).toFixed(1);
@@ -701,10 +714,18 @@ async function initMonthlyRecords(){
       // 날짜 항상 최신화
       const [y,mo]=ym.split('-');
       rec.date={y,m:mo,d:MEASURE_DATES[ym]||''};
+      // 1LINE 공란 위치 강제 적용 (기존 Firestore 데이터 포함)
+      if(line==='1LINE'){
+        ['101','102','161','171','181'].forEach(c=>{rec.base.FRT[c]='';delete rec.meas.FRT[c];});
+        ['101','103','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
+        if(rec.base.RR['191']==='13~20'||rec.base.RR['191']==='13~20kgf') rec.base.RR['191']='20~30';
+      }
       // 실측값 채우기 (소수점 포함, 정수값이면 재생성)
+      const lineSecs=getSections(line);
       let ci=0, needFill=false;
-      SECTIONS.forEach(sec=>{
+      lineSecs.forEach(sec=>{
         Object.keys(rec.base[sec.key]||{}).forEach(col=>{
+          if(rec.base[sec.key][col]==='') return;
           const v=rec.meas[sec.key][col];
           if(!v||!String(v).includes('.')) needFill=true;
           ci++;
@@ -712,8 +733,9 @@ async function initMonthlyRecords(){
       });
       if(needFill){
         ci=0;
-        SECTIONS.forEach(sec=>{
+        lineSecs.forEach(sec=>{
           Object.keys(rec.base[sec.key]||{}).forEach(col=>{
+            if(rec.base[sec.key][col]==='') return;
             const seed=(mi+1)*1000+(line==='2LINE'?500:0)+ci;
             rec.meas[sec.key][col]=autoMeasVal(rec.base[sec.key][col],seed);
             ci++;
