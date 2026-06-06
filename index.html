@@ -859,8 +859,11 @@ async function initMonthlyRecords(){
         ['101','102','161','171','181'].forEach(c=>{rec.base.FRT[c]='';delete rec.meas.FRT[c];});
         ['101','103','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
       }
-      // 1LINE/2LINE 공통: RR 191 → 20~30
-      if(rec.base.RR['191']==='13~20'||rec.base.RR['191']==='13~20kgf') rec.base.RR['191']='20~30';
+      // 1LINE/2LINE 공통: RR 191 → 20~30 (기준값 + 실측값 재생성)
+      if(rec.base.RR['191']==='13~20'||rec.base.RR['191']==='13~20kgf'){
+        rec.base.RR['191']='20~30';
+        delete rec.meas.RR['191']; // 실측값 재생성 유도
+      }
       // 실측값 채우기 (소수점 포함, 정수값이면 재생성)
       const lineSecs=getSections(line);
       let ci=0, needFill=false;
