@@ -151,6 +151,7 @@
       <div class="nav-item active" data-view="dash" onclick="showView('dash')"><span class="ic">🏠</span> 메인</div>
       <div class="nav-item" data-view="input" onclick="showView('input')"><span class="ic">✏️</span> 측정 입력</div>
       <div class="nav-item" data-view="history" onclick="showView('history')"><span class="ic">📋</span> 이력 조회</div>
+      <div class="nav-item" data-view="settings" onclick="showView('settings')"><span class="ic">⚙️</span> 설정</div>
     </nav>
     <div class="side-foot">
       <div class="av">김</div>
@@ -252,6 +253,29 @@
       <div id="histDetail"></div>
     </section>
 
+    <!-- 설정 -->
+    <section class="view" id="view-settings" style="display:none">
+      <div class="page-h">
+        <button class="hamb" onclick="toggleNav(true)">☰</button>
+        <h1>⚙️ 설정</h1>
+        <span class="grow"></span>
+        <button class="btn pri" onclick="saveTemplate()">💾 설정 저장</button>
+        <button class="btn" onclick="applyTemplateToAll()" style="color:#f59e0b;border-color:#78350f">기존 기록에 일괄 적용</button>
+        <div class="sub">기준값 빈칸 = 공란(비활성) &nbsp;|&nbsp; 값 입력 = 활성화 &nbsp;|&nbsp; 저장 후 새 기록부터 반영됩니다</div>
+      </div>
+      <div class="hint" style="font-size:14px;line-height:1.8">
+        · 각 위치 기준값을 직접 입력하세요. 예: <b>13~20</b> &nbsp;(범위 입력)
+        · <b>비워두면</b> 해당 공정은 공란(회색, 측정 안 함)으로 처리됩니다.
+        · <b>저장</b>하면 이후 새로 만드는 기록에 적용됩니다.
+        · <b>기존 기록에 일괄 적용</b>은 이미 있는 모든 월별 기록의 기준값도 업데이트합니다.
+      </div>
+      <div class="tabs">
+        <div class="stab tab active" data-line="1LINE" onclick="switchSettingsLine('1LINE')">◎ 조립 1LINE</div>
+        <div class="stab tab" data-line="2LINE" onclick="switchSettingsLine('2LINE')">◎ 조립 2LINE</div>
+      </div>
+      <div id="settingsTables"></div>
+    </section>
+
   </main>
 </div>
 
@@ -294,6 +318,12 @@ const SECTIONS_2LINE = [
 ];
 function getSections(line){ return line==='1LINE'?SECTIONS_1LINE:SECTIONS_2LINE; }
 
+let TEMPLATE=null; // Firestore settings/dashboard.template 에서 로드
+function getDefaultBase(line){
+  if(TEMPLATE&&TEMPLATE[line]) return JSON.parse(JSON.stringify(TEMPLATE[line]));
+  return JSON.parse(JSON.stringify(DEFAULT_BASE[line]));
+}
+
 let curLine='1LINE', curRecId='', DB={'1LINE':{records:{}},'2LINE':{records:{}}}, db=null;
 let SETTINGS={dashPhotos:[]};
 const ADMIN_PIN='103518';
@@ -321,6 +351,7 @@ async function loadAll(){
     DB[v.line].records[v.ym]={date:v.date||{y:'',m:'',d:''},base:v.base||{FRT:{},SUB:{},RR:{}},meas:v.meas||{FRT:{},SUB:{},RR:{}},photos:v.photos||[]}; });
   try{ const sdoc=await db.collection('settings').doc('dashboard').get(); SETTINGS = sdoc.exists?(sdoc.data()||{}):{}; }catch(e){ SETTINGS={}; }
   if(!SETTINGS.dashPhotos) SETTINGS.dashPhotos=[];
+  if(SETTINGS.template) TEMPLATE=JSON.parse(JSON.stringify(SETTINGS.template));
 }
 async function saveSettings(){ if(!db) return; await db.collection('settings').doc('dashboard').set(SETTINGS); }
 async function saveRecord(line,id){
@@ -348,6 +379,7 @@ function showView(v){
   if(v==='dash') renderDash();
   if(v==='history') openHistory();
   if(v==='input') render();
+  if(v==='settings') openSettings();
   toggleNav(false);
 }
 function toggleNav(open){
@@ -356,7 +388,7 @@ function toggleNav(open){
 }
 
 /* ===== 기록 ===== */
-function blankRecord(line){ return { date:{y:'',m:'',d:''}, base:JSON.parse(JSON.stringify(DEFAULT_BASE[line])), meas:{FRT:{},SUB:{},RR:{}}, photos:[] }; }
+function blankRecord(line){ return { date:{y:'',m:'',d:''}, base:getDefaultBase(line), meas:{FRT:{},SUB:{},RR:{}}, photos:[] }; }
 function latestRecord(line){ const ids=Object.keys(DB[line].records).sort(); return ids.length?DB[line].records[ids[ids.length-1]]:null; }
 function switchLine(line){
   curLine=line;
@@ -637,7 +669,7 @@ function buildStatic(line,id){
   let html=`<div class="rep-head">■ ${(rec.date.y||id.split('-')[0]).toString().slice(2)}년 범퍼 조립 토크 측정 · 조립 ${line}<br>
     측정일 : ${rec.date.y||id.split('-')[0]}년 ${rec.date.m||(+id.split('-')[1])}월 ${rec.date.d||''}일 &nbsp;<span class="unit">(단위: kgf)</span></div>`;
   getSections(line).forEach(sec=>{
-    const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined && rec.base[sec.key][c]!==''); if(!cols.length) return;
+    const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined); if(!cols.length) return;
     const cells=cols.map(c=>{ const base=rec.base[sec.key][c]||'', meas=rec.meas[sec.key][c]??'', st=judge(base,meas); return {c,base,meas,st}; });
     html+=`<div class="rep-sec"><div class="rep-sech">${sec.label}</div><div class="scroll"><table>
       <tr><td class="rowlab">구분</td>${cells.map(x=>`<th>${x.c}</th>`).join('')}</tr>
@@ -649,6 +681,109 @@ function buildStatic(line,id){
   const photos=rec.photos||[];
   if(photos.length){ html+=`<div class="rep-sec"><div class="rep-sech">📷 사진</div><div class="photos" style="padding:8px">${photos.map(p=>`<div class="ph"><img src="${p.url}" onclick="window.open('${p.url}','_blank')"></div>`).join('')}</div></div>`; }
   return html;
+}
+
+/* ===== 설정 ===== */
+let settingsDraft=null, settingsLine='1LINE';
+
+function openSettings(){
+  // 현재 TEMPLATE(없으면 DEFAULT_BASE)로 draft 초기화
+  settingsDraft={};
+  ['1LINE','2LINE'].forEach(line=>{
+    settingsDraft[line]={FRT:{},SUB:{},RR:{}};
+    const src=(TEMPLATE&&TEMPLATE[line])?TEMPLATE[line]:DEFAULT_BASE[line];
+    COLS.forEach(c=>{
+      settingsDraft[line].FRT[c]=src.FRT[c]??'';
+      settingsDraft[line].RR[c]=src.RR[c]??'';
+    });
+    SUBCOLS.forEach(c=>{ settingsDraft[line].SUB[c]=src.SUB[c]??''; });
+  });
+  settingsLine='1LINE';
+  renderSettings();
+}
+
+function switchSettingsLine(line){
+  settingsLine=line;
+  document.querySelectorAll('.stab').forEach(t=>t.classList.toggle('active',t.dataset.line===line));
+  renderSettingsTables();
+}
+
+function renderSettings(){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.toggle('active',t.dataset.line===settingsLine));
+  renderSettingsTables();
+}
+
+function renderSettingsTables(){
+  if(!settingsDraft) return;
+  const tmpl=settingsDraft[settingsLine];
+  const sections=getSections(settingsLine);
+  let html='';
+  sections.forEach(sec=>{
+    const cols=sec.key==='SUB'?SUBCOLS:COLS;
+    const cells=cols.map(c=>{
+      const v=tmpl[sec.key][c]??'';
+      const cls=v===''?'off':'';
+      return `<td class="${cls}" style="min-width:72px"><input
+        data-sec="${sec.key}" data-col="${c}"
+        value="${v}" placeholder="비움=공란"
+        onchange="onTmplCell(this)"
+        style="width:100%;height:100%;border:0;text-align:center;font-size:14px;background:transparent;outline:none;color:#f1f5f9;padding:6px 2px"></td>`;
+    });
+    html+=`<div class="sec" style="margin-bottom:12px">
+      <div class="sec-h">${sec.label}
+        <span class="stat" style="font-weight:400;font-size:12px;margin-left:8px">빈칸=공란(회색/비활성) · 값 입력=활성화</span>
+      </div>
+      <div class="scroll"><table>
+        <tr><td class="rowlab">구분</td>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>
+        <tr><td class="rowlab">기준값</td>${cells.join('')}</tr>
+      </table></div>
+    </div>`;
+  });
+  document.getElementById('settingsTables').innerHTML=html;
+}
+
+function onTmplCell(el){
+  const v=el.value.trim();
+  settingsDraft[settingsLine][el.dataset.sec][el.dataset.col]=v;
+  // 셀 색 즉시 반영
+  el.closest('td').className=v===''?'off':'';
+}
+
+async function saveTemplate(){
+  if(!checkAdmin()) return;
+  TEMPLATE=JSON.parse(JSON.stringify(settingsDraft));
+  SETTINGS.template=TEMPLATE;
+  try{
+    await saveSettings();
+    alert('✅ 설정이 저장되었습니다.\n이후 새로 만드는 기록부터 이 기준값이 적용됩니다.');
+  }catch(e){ alert('저장 실패: '+e.message); }
+}
+
+async function applyTemplateToAll(){
+  if(!checkAdmin()) return;
+  if(!confirm('⚠️ 기존 모든 월별 기록의 기준값을\n현재 설정으로 업데이트할까요?\n\n실측값은 그대로 유지됩니다.\n이 작업은 되돌릴 수 없습니다.')) return;
+  const toSave=[];
+  ['1LINE','2LINE'].forEach(line=>{
+    const tmpl=settingsDraft[line];
+    Object.keys(DB[line].records).forEach(ym=>{
+      const rec=DB[line].records[ym];
+      COLS.forEach(c=>{
+        ['FRT','RR'].forEach(sec=>{
+          rec.base[sec][c]=tmpl[sec][c];
+          if(tmpl[sec][c]==='') delete rec.meas[sec][c];
+        });
+      });
+      SUBCOLS.forEach(c=>{
+        if(tmpl.SUB[c]!=='') rec.base.SUB[c]=tmpl.SUB[c];
+        else { rec.base.SUB[c]=''; delete rec.meas.SUB[c]; }
+      });
+      toSave.push({line,ym});
+    });
+  });
+  try{
+    for(const {line,ym} of toSave) await saveRecord(line,ym);
+    alert(`✅ ${toSave.length}건 기록에 기준값이 적용되었습니다.`);
+  }catch(e){ alert('적용 실패: '+e.message); }
 }
 
 /* ===== CSV ===== */
