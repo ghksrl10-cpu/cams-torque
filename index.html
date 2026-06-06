@@ -296,27 +296,24 @@ const firebaseConfig = {
 
 <script>
 const COLS = ['101','102','103','111','121','131','141','151','161','171','181','191'];
-const SUBCOLS = ['서브1','서브2','서브3','서브4'];
+const COLS_FRT = ['서브1','101','102','103','111','121','131','141','151','161','171','181','191'];
 function allBase(special){ const o={}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
+function allBaseFRT(special){ const o={'서브1':'13~20'}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 const DEFAULT_BASE = {
   '1LINE':{
-    FRT:allBase({'101':'','102':'','161':'','171':'','181':''}),
-    SUB:{'서브1':'20~25'},
+    FRT:allBaseFRT({'서브1':'20~25','101':'','102':'','161':'','171':'','181':''}),
     RR:allBase({'101':'','103':'','151':'','161':'','171':'','181':'','191':'20~30'})
   },
-  '2LINE':{ FRT:allBase({'103':'35~51'}), SUB:{'서브1':'13~20'}, RR:allBase({'111':'35~51'}) }
+  '2LINE':{
+    FRT:allBaseFRT({'103':'35~51'}),
+    RR:allBase({'111':'35~51','191':'20~30'})
+  }
 };
-const SECTIONS_1LINE = [
-  {key:'SUB', label:'서브', cols:SUBCOLS},
-  {key:'FRT', label:'FRT', cols:COLS},
+const SECTIONS = [
+  {key:'FRT', label:'FRT', cols:COLS_FRT},
   {key:'RR',  label:'RR',  cols:COLS},
 ];
-const SECTIONS_2LINE = [
-  {key:'FRT', label:'FRT', cols:COLS},
-  {key:'SUB', label:'서브', cols:SUBCOLS},
-  {key:'RR',  label:'RR',  cols:COLS},
-];
-function getSections(line){ return line==='1LINE'?SECTIONS_1LINE:SECTIONS_2LINE; }
+function getSections(line){ return SECTIONS; }
 
 let TEMPLATE=null; // Firestore settings/dashboard.template 에서 로드
 function getDefaultBase(line){
@@ -388,7 +385,7 @@ function toggleNav(open){
 }
 
 /* ===== 기록 ===== */
-function blankRecord(line){ return { date:{y:'',m:'',d:''}, base:getDefaultBase(line), meas:{FRT:{},SUB:{},RR:{}}, photos:[] }; }
+function blankRecord(line){ return { date:{y:'',m:'',d:''}, base:getDefaultBase(line), meas:{FRT:{},RR:{}}, photos:[] }; }
 function latestRecord(line){ const ids=Object.keys(DB[line].records).sort(); return ids.length?DB[line].records[ids[ids.length-1]]:null; }
 function switchLine(line){
   curLine=line;
@@ -438,7 +435,6 @@ function render(){
   const root=document.getElementById('sections'); if(!root) return; root.innerHTML='';
   getSections(curLine).forEach(sec=>{
     let cols=sec.cols;
-    if(sec.key==='SUB'){ cols=SUBCOLS.filter(c=>rec.base.SUB[c]!==undefined); if(!cols.length)cols=['서브1']; }
     let okc=0,ngc=0,cnt=0;
     const cells=cols.map(c=>{
       const base=rec.base[sec.key][c]??'', meas=rec.meas[sec.key][c]??'';
@@ -479,11 +475,14 @@ function fillAllBase(){
   const v=(prompt('모든 기준값을 이 값으로 채웁니다 (특수값 35~51, 20~25 제외)\n예: 13~20', '13~20')||'').trim();
   if(!v) return;
   const SPECIAL=['35~51','20~25','35~51kgf','20~25kgf','20~30'];
-  ['FRT','RR'].forEach(k=>COLS.forEach(c=>{
-    const cv=rec.base[k][c];
-    if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base[k][c]=v;
-  }));
-  if(!SPECIAL.includes(rec.base.SUB['서브1'])) rec.base.SUB['서브1']=v;
+  COLS_FRT.forEach(c=>{
+    const cv=rec.base.FRT[c];
+    if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base.FRT[c]=v;
+  });
+  COLS.forEach(c=>{
+    const cv=rec.base.RR[c];
+    if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base.RR[c]=v;
+  });
   persist(); render();
 }
 function onMeas(el){ const r=cur(),v=el.value.trim(); if(v==='')delete r.meas[el.dataset.sec][el.dataset.col]; else r.meas[el.dataset.sec][el.dataset.col]=v; persist(); render(); }
@@ -690,13 +689,10 @@ function openSettings(){
   // 현재 TEMPLATE(없으면 DEFAULT_BASE)로 draft 초기화
   settingsDraft={};
   ['1LINE','2LINE'].forEach(line=>{
-    settingsDraft[line]={FRT:{},SUB:{},RR:{}};
+    settingsDraft[line]={FRT:{},RR:{}};
     const src=(TEMPLATE&&TEMPLATE[line])?TEMPLATE[line]:DEFAULT_BASE[line];
-    COLS.forEach(c=>{
-      settingsDraft[line].FRT[c]=src.FRT[c]??'';
-      settingsDraft[line].RR[c]=src.RR[c]??'';
-    });
-    SUBCOLS.forEach(c=>{ settingsDraft[line].SUB[c]=src.SUB[c]??''; });
+    COLS_FRT.forEach(c=>{ settingsDraft[line].FRT[c]=src.FRT[c]??''; });
+    COLS.forEach(c=>{ settingsDraft[line].RR[c]=src.RR[c]??''; });
   });
   settingsLine='1LINE';
   renderSettings();
@@ -767,15 +763,13 @@ async function applyTemplateToAll(){
     const tmpl=settingsDraft[line];
     Object.keys(DB[line].records).forEach(ym=>{
       const rec=DB[line].records[ym];
-      COLS.forEach(c=>{
-        ['FRT','RR'].forEach(sec=>{
-          rec.base[sec][c]=tmpl[sec][c];
-          if(tmpl[sec][c]==='') delete rec.meas[sec][c];
-        });
+      COLS_FRT.forEach(c=>{
+        rec.base.FRT[c]=tmpl.FRT[c];
+        if(tmpl.FRT[c]==='') delete rec.meas.FRT[c];
       });
-      SUBCOLS.forEach(c=>{
-        if(tmpl.SUB[c]!=='') rec.base.SUB[c]=tmpl.SUB[c];
-        else { rec.base.SUB[c]=''; delete rec.meas.SUB[c]; }
+      COLS.forEach(c=>{
+        rec.base.RR[c]=tmpl.RR[c];
+        if(tmpl.RR[c]==='') delete rec.meas.RR[c];
       });
       toSave.push({line,ym});
     });
@@ -849,12 +843,24 @@ async function initMonthlyRecords(){
       // 날짜 항상 최신화
       const [y,mo]=ym.split('-');
       rec.date={y,m:mo,d:MEASURE_DATES[ym]||''};
-      // 1LINE 공란 위치 강제 적용 (기존 Firestore 데이터 포함)
+      // 마이그레이션: 기존 SUB 섹션 → FRT 첫 컬럼(서브1)으로 통합
+      if(!rec.base.FRT) rec.base.FRT={};
+      if(!rec.meas.FRT) rec.meas.FRT={};
+      if(rec.base.SUB){
+        const sv=rec.base.SUB['서브1'];
+        if(sv!==undefined&&rec.base.FRT['서브1']===undefined) rec.base.FRT['서브1']=sv;
+        if(rec.meas.SUB&&rec.meas.SUB['서브1']!==undefined&&rec.meas.FRT['서브1']===undefined) rec.meas.FRT['서브1']=rec.meas.SUB['서브1'];
+        delete rec.base.SUB; delete rec.meas.SUB;
+      }
+      // 서브1 기본값 없으면 세팅
+      if(rec.base.FRT['서브1']===undefined) rec.base.FRT['서브1']=line==='1LINE'?'20~25':'13~20';
+      // 1LINE 공란 위치 강제 적용
       if(line==='1LINE'){
         ['101','102','161','171','181'].forEach(c=>{rec.base.FRT[c]='';delete rec.meas.FRT[c];});
         ['101','103','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
-        if(rec.base.RR['191']==='13~20'||rec.base.RR['191']==='13~20kgf') rec.base.RR['191']='20~30';
       }
+      // 1LINE/2LINE 공통: RR 191 → 20~30
+      if(rec.base.RR['191']==='13~20'||rec.base.RR['191']==='13~20kgf') rec.base.RR['191']='20~30';
       // 실측값 채우기 (소수점 포함, 정수값이면 재생성)
       const lineSecs=getSections(line);
       let ci=0, needFill=false;
