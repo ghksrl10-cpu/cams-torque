@@ -306,7 +306,7 @@ const DEFAULT_BASE = {
   },
   '2LINE':{
     FRT:allBaseFRT({'103':'35~51'}),
-    RR:allBase({'111':'35~51','191':'20~30'})
+    RR:allBase({'111':'35~51'})
   }
 };
 const SECTIONS = [
@@ -859,10 +859,18 @@ async function initMonthlyRecords(){
         ['101','102','161','171','181'].forEach(c=>{rec.base.FRT[c]='';delete rec.meas.FRT[c];});
         ['101','103','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
       }
-      // 1LINE/2LINE 공통: RR 191 → 20~30 (기준값 + 실측값 재생성)
-      if(rec.base.RR['191']==='13~20'||rec.base.RR['191']==='13~20kgf'){
+      // RR 191 라인별 처리
+      if(line==='1LINE'){
         rec.base.RR['191']='20~30';
-        delete rec.meas.RR['191']; // 실측값 재생성 유도
+        // 실측값이 구 기준(13~20 범위)이면 삭제 → 20~30으로 재생성
+        const mv191=parseFloat(rec.meas.RR['191']);
+        if(isNaN(mv191)||mv191<20) delete rec.meas.RR['191'];
+      }
+      if(line==='2LINE'){
+        if(rec.base.RR['191']==='20~30'){
+          rec.base.RR['191']='13~20';
+          delete rec.meas.RR['191']; // 실측값 재생성
+        }
       }
       // 실측값 채우기 (소수점 포함, 정수값이면 재생성)
       const lineSecs=getSections(line);
