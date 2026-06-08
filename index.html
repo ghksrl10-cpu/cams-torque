@@ -295,18 +295,18 @@ const firebaseConfig = {
 </script>
 
 <script>
-const COLS = ['101','102','103','111','121','131','141','151','161','171','181','191'];
+const COLS = ['101','102','103','103-2','111','121','131','141','151','161','171','181','191'];
 const COLS_FRT = ['서브1','101','102','103','111','121','131','141','151','161','171','181','191'];
 function allBase(special){ const o={}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 function allBaseFRT(special){ const o={'서브1':'13~20'}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 const DEFAULT_BASE = {
   '1LINE':{
     FRT:allBaseFRT({'서브1':'20~25','101':'','102':'','161':'','171':'','181':''}),
-    RR:allBase({'101':'','103':'','151':'','161':'','171':'','181':'','191':'20~30'})
+    RR:allBase({'101':'','103':'','103-2':'','151':'','161':'','171':'','181':'','191':'20~30'})
   },
   '2LINE':{
     FRT:allBaseFRT({'103':'35~51'}),
-    RR:allBase({'111':'35~51'})
+    RR:allBase({'111':'35~51','103-2':''})
   }
 };
 const SECTIONS = [
@@ -860,6 +860,33 @@ async function initMonthlyRecords(){
     console.log('V3 마이그레이션 완료: 2LINE 기준값+실측값 재생성');
   }
 
+  // ── V4 마이그레이션: RR '103-2' 컬럼 추가 (1회만 실행) ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<4){
+    months.forEach((ym)=>{
+      // 1LINE: '103-2' 공란 처리
+      const rec1=DB['1LINE'].records[ym]; if(rec1){
+        if(!rec1.base.RR) rec1.base.RR={};
+        rec1.base.RR['103-2']=''; delete rec1.meas.RR['103-2'];
+        toSave.push({line:'1LINE',ym});
+      }
+      // 2LINE: '103-2' 실측 공간만 (기준값 없음)
+      const rec2=DB['2LINE'].records[ym]; if(rec2){
+        if(!rec2.base.RR) rec2.base.RR={};
+        rec2.base.RR['103-2']=''; delete rec2.meas.RR['103-2'];
+        toSave.push({line:'2LINE',ym});
+      }
+    });
+    // 템플릿 업데이트
+    if(TEMPLATE){
+      if(TEMPLATE['1LINE']&&TEMPLATE['1LINE'].RR) TEMPLATE['1LINE'].RR['103-2']='';
+      if(TEMPLATE['2LINE']&&TEMPLATE['2LINE'].RR) TEMPLATE['2LINE'].RR['103-2']='';
+      SETTINGS.template=TEMPLATE;
+    }
+    SETTINGS.dataVersion=4;
+    await saveSettings();
+    console.log('V4 마이그레이션 완료: RR 103-2 컬럼 추가');
+  }
+
   ['1LINE','2LINE'].forEach(line=>{
     months.forEach((ym,mi)=>{
       const isNew=!DB[line].records[ym];
@@ -887,7 +914,7 @@ async function initMonthlyRecords(){
       // 1LINE 공란 위치 강제 적용
       if(line==='1LINE'){
         ['101','102','161','171','181'].forEach(c=>{rec.base.FRT[c]='';delete rec.meas.FRT[c];});
-        ['101','103','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
+        ['101','103','103-2','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
       }
       // RR 191 라인별 처리
       if(line==='1LINE'){
