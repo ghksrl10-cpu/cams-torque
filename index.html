@@ -305,8 +305,8 @@ const DEFAULT_BASE = {
     RR:allBase({'101':'','103':'','103-2':'','151':'','161':'','171':'','181':'','191':'20~30'})
   },
   '2LINE':{
-    FRT:allBaseFRT({'103':'35~51'}),
-    RR:allBase({'111':'35~51','103-2':''})
+    FRT:allBaseFRT({'서브1':'','101':'15~40','103':'25~40','151':'','181':'','191':''}),
+    RR:allBase({'101':'','102':'','103':'','103-2':'','111':'25~40','151':'','171':'25~40','181':'','191':''})
   }
 };
 const SECTIONS = [
@@ -751,7 +751,25 @@ async function saveTemplate(){
   SETTINGS.template=TEMPLATE;
   try{
     await saveSettings();
-    alert('✅ 설정이 저장되었습니다.\n이후 새로 만드는 기록부터 이 기준값이 적용됩니다.');
+    // 기존 기록에도 자동 일괄 적용
+    const toSave=[];
+    ['1LINE','2LINE'].forEach(line=>{
+      const tmpl=TEMPLATE[line]; if(!tmpl) return;
+      Object.keys(DB[line].records).forEach(ym=>{
+        const rec=DB[line].records[ym];
+        COLS_FRT.forEach(c=>{
+          rec.base.FRT[c]=tmpl.FRT[c];
+          if(tmpl.FRT[c]==='') delete rec.meas.FRT[c];
+        });
+        COLS.forEach(c=>{
+          rec.base.RR[c]=tmpl.RR[c];
+          if(tmpl.RR[c]==='') delete rec.meas.RR[c];
+        });
+        toSave.push({line,ym});
+      });
+    });
+    for(const {line,ym} of toSave) await saveRecord(line,ym);
+    alert(`✅ 설정 저장 완료!\n기존 ${toSave.length}건 기록에도 자동 적용되었습니다.`);
   }catch(e){ alert('저장 실패: '+e.message); }
 }
 
@@ -885,6 +903,33 @@ async function initMonthlyRecords(){
     SETTINGS.dataVersion=4;
     await saveSettings();
     console.log('V4 마이그레이션 완료: RR 103-2 컬럼 추가');
+  }
+
+  // ── V5 마이그레이션: 2LINE 기준값 복원 (사진 참고값으로) (1회만 실행) ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<5){
+    const def2v5=JSON.parse(JSON.stringify(DEFAULT_BASE['2LINE']));
+    months.forEach((ym,mi)=>{
+      const rec=DB['2LINE'].records[ym]; if(!rec) return;
+      if(!rec.base.FRT) rec.base.FRT={}; if(!rec.base.RR) rec.base.RR={};
+      if(!rec.meas.FRT) rec.meas.FRT={}; if(!rec.meas.RR) rec.meas.RR={};
+      COLS_FRT.forEach((c,ci)=>{
+        rec.base.FRT[c]=def2v5.FRT[c];
+        if(def2v5.FRT[c]==='') delete rec.meas.FRT[c];
+        else if(!rec.meas.FRT[c]) rec.meas.FRT[c]=autoMeasVal(def2v5.FRT[c],(mi+1)*1000+500+ci);
+      });
+      COLS.forEach((c,ci)=>{
+        rec.base.RR[c]=def2v5.RR[c];
+        if(def2v5.RR[c]==='') delete rec.meas.RR[c];
+        else if(!rec.meas.RR[c]) rec.meas.RR[c]=autoMeasVal(def2v5.RR[c],(mi+1)*1000+500+ci+20);
+      });
+      toSave.push({line:'2LINE',ym});
+    });
+    if(!TEMPLATE) TEMPLATE={};
+    TEMPLATE['2LINE']=def2v5;
+    SETTINGS.template=TEMPLATE;
+    SETTINGS.dataVersion=5;
+    await saveSettings();
+    console.log('V5 마이그레이션 완료: 2LINE 기준값 복원');
   }
 
   ['1LINE','2LINE'].forEach(line=>{
