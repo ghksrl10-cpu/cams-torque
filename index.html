@@ -912,15 +912,13 @@ async function initMonthlyRecords(){
       const rec=DB['2LINE'].records[ym]; if(!rec) return;
       if(!rec.base.FRT) rec.base.FRT={}; if(!rec.base.RR) rec.base.RR={};
       if(!rec.meas.FRT) rec.meas.FRT={}; if(!rec.meas.RR) rec.meas.RR={};
-      COLS_FRT.forEach((c,ci)=>{
+      COLS_FRT.forEach(c=>{
         rec.base.FRT[c]=def2v5.FRT[c];
         if(def2v5.FRT[c]==='') delete rec.meas.FRT[c];
-        else if(!rec.meas.FRT[c]) rec.meas.FRT[c]=autoMeasVal(def2v5.FRT[c],(mi+1)*1000+500+ci);
       });
-      COLS.forEach((c,ci)=>{
+      COLS.forEach(c=>{
         rec.base.RR[c]=def2v5.RR[c];
         if(def2v5.RR[c]==='') delete rec.meas.RR[c];
-        else if(!rec.meas.RR[c]) rec.meas.RR[c]=autoMeasVal(def2v5.RR[c],(mi+1)*1000+500+ci+20);
       });
       toSave.push({line:'2LINE',ym});
     });
@@ -930,6 +928,20 @@ async function initMonthlyRecords(){
     SETTINGS.dataVersion=5;
     await saveSettings();
     console.log('V5 마이그레이션 완료: 2LINE 기준값 복원');
+  }
+
+  // ── V6 마이그레이션: 자동생성 실측값 전체 삭제 (실측은 직접 입력) ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<6){
+    months.forEach(ym=>{
+      ['1LINE','2LINE'].forEach(line=>{
+        const rec=DB[line].records[ym]; if(!rec) return;
+        rec.meas={FRT:{},RR:{}};
+        toSave.push({line,ym});
+      });
+    });
+    SETTINGS.dataVersion=6;
+    await saveSettings();
+    console.log('V6 마이그레이션 완료: 자동생성 실측값 삭제');
   }
 
   ['1LINE','2LINE'].forEach(line=>{
@@ -973,28 +985,6 @@ async function initMonthlyRecords(){
           rec.base.RR['191']='13~20';
           delete rec.meas.RR['191']; // 실측값 재생성
         }
-      }
-      // 실측값 채우기 (소수점 포함, 정수값이면 재생성)
-      const lineSecs=getSections(line);
-      let ci=0, needFill=false;
-      lineSecs.forEach(sec=>{
-        Object.keys(rec.base[sec.key]||{}).forEach(col=>{
-          if(rec.base[sec.key][col]==='') return;
-          const v=rec.meas[sec.key][col];
-          if(!v||!String(v).includes('.')) needFill=true;
-          ci++;
-        });
-      });
-      if(needFill){
-        ci=0;
-        lineSecs.forEach(sec=>{
-          Object.keys(rec.base[sec.key]||{}).forEach(col=>{
-            if(rec.base[sec.key][col]==='') return;
-            const seed=(mi+1)*1000+(line==='2LINE'?500:0)+ci;
-            rec.meas[sec.key][col]=autoMeasVal(rec.base[sec.key][col],seed);
-            ci++;
-          });
-        });
       }
       toSave.push({line,ym});
     });
