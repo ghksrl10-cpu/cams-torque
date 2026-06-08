@@ -715,7 +715,7 @@ function renderSettingsTables(){
   const sections=getSections(settingsLine);
   let html='';
   sections.forEach(sec=>{
-    const cols=sec.key==='SUB'?SUBCOLS:COLS;
+    const cols=sec.cols;
     const cells=cols.map(c=>{
       const v=tmpl[sec.key][c]??'';
       const cls=v===''?'off':'';
@@ -830,6 +830,23 @@ async function initMonthlyRecords(){
     '2026-01','2026-02','2026-03','2026-04','2026-05'
   ];
   const toSave=[];
+  // ── V2 마이그레이션: 2LINE 기준값 손상 복구 (1회만 실행) ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<2){
+    const def2=JSON.parse(JSON.stringify(DEFAULT_BASE['2LINE']));
+    Object.keys(DB['2LINE'].records).forEach(ym=>{
+      const rec=DB['2LINE'].records[ym];
+      if(!rec.base.FRT) rec.base.FRT={}; if(!rec.base.RR) rec.base.RR={};
+      if(!rec.meas.FRT) rec.meas.FRT={}; if(!rec.meas.RR) rec.meas.RR={};
+      COLS_FRT.forEach(c=>{ rec.base.FRT[c]=def2.FRT[c]; delete rec.meas.FRT[c]; });
+      COLS.forEach(c=>{ rec.base.RR[c]=def2.RR[c]; delete rec.meas.RR[c]; });
+      toSave.push({line:'2LINE',ym});
+    });
+    if(TEMPLATE){ TEMPLATE['2LINE']=JSON.parse(JSON.stringify(def2)); SETTINGS.template=TEMPLATE; }
+    SETTINGS.dataVersion=2;
+    await saveSettings();
+    console.log('V2 마이그레이션 완료: 2LINE 기준값 복구');
+  }
+
   ['1LINE','2LINE'].forEach(line=>{
     months.forEach((ym,mi)=>{
       const isNew=!DB[line].records[ym];
