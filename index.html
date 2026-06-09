@@ -350,7 +350,8 @@ async function loadAll(){
   const snap=await db.collection('records').get();
   DB={'1LINE':{records:{}},'2LINE':{records:{}}};
   snap.forEach(d=>{ const v=d.data(); if(!DB[v.line])return;
-    DB[v.line].records[v.ym]={date:v.date||{y:'',m:'',d:''},base:v.base||{FRT:{},SUB:{},RR:{}},meas:v.meas||{FRT:{},SUB:{},RR:{}},photos:v.photos||[]}; });
+    const b=v.base||{}, m=v.meas||{};
+    DB[v.line].records[v.ym]={date:v.date||{y:'',m:'',d:''},base:{FRT:b.FRT||{},RR:b.RR||{}},meas:{FRT:m.FRT||{},RR:m.RR||{}},photos:v.photos||[]}; });
   try{ const sdoc=await db.collection('settings').doc('dashboard').get(); SETTINGS = sdoc.exists?(sdoc.data()||{}):{}; }catch(e){ SETTINGS={}; }
   if(!SETTINGS.dashPhotos) SETTINGS.dashPhotos=[];
   if(SETTINGS.template) TEMPLATE=JSON.parse(JSON.stringify(SETTINGS.template));
@@ -594,7 +595,7 @@ async function delDashPhoto(i){
 }
 
 /* ===== 이력 조회 ===== */
-function countRec(line,rec){ let ok=0,ng=0,cnt=0; getSections(line).forEach(s=>Object.keys(rec.base[s.key]||{}).forEach(c=>{if(rec.base[s.key][c]==='')return;cnt++;const st=judge(rec.base[s.key][c],rec.meas[s.key][c]);if(st==='ok')ok++;if(st==='ng')ng++;})); return{ok,ng,cnt}; }
+function countRec(line,rec){ let ok=0,ng=0,cnt=0; getSections(line).forEach(s=>{ const ms=rec.meas?.[s.key]||{}; Object.keys(rec.base[s.key]||{}).forEach(c=>{if(rec.base[s.key][c]==='')return;cnt++;const st=judge(rec.base[s.key][c],ms[c]);if(st==='ok')ok++;if(st==='ng')ng++;}); }); return{ok,ng,cnt}; }
 function openHistory(){
   // 모든 월 목록 수집 (1LINE + 2LINE 합침)
   const allYms=new Set();
@@ -674,7 +675,7 @@ function buildStatic(line,id){
     측정일 : ${rec.date.y||id.split('-')[0]}년 ${rec.date.m||(+id.split('-')[1])}월 ${rec.date.d||''}일 &nbsp;<span class="unit">(단위: kgf)</span></div>`;
   getSections(line).forEach(sec=>{
     const cols=sec.cols.filter(c=>rec.base[sec.key][c]!==undefined); if(!cols.length) return;
-    const cells=cols.map(c=>{ const base=rec.base[sec.key][c]||'', meas=rec.meas[sec.key][c]??'', st=judge(base,meas); return {c,base,meas,st}; });
+    const cells=cols.map(c=>{ const base=rec.base[sec.key][c]||'', meas=(rec.meas?.[sec.key]?.[c])??'', st=judge(base,meas); return {c,base,meas,st}; });
     html+=`<div class="rep-sec"><div class="rep-sech">${sec.label}</div><div class="scroll"><table>
       <tr><td class="rowlab">구분</td>${cells.map(x=>`<th>${x.c}</th>`).join('')}</tr>
       <tr><td class="rowlab">기준값</td>${cells.map(x=>`<td>${x.base?x.base+' <span class="unit">kgf</span>':''}</td>`).join('')}</tr>
