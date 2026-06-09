@@ -302,12 +302,12 @@ function allBase(special){ const o={}; COLS.forEach(c=>o[c]='13~20'); return Obj
 function allBaseFRT(special){ const o={'서브1':'13~20'}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 const DEFAULT_BASE = {
   '1LINE':{
-    FRT:allBaseFRT({'서브1':'20~25','101':'','102':'','161':'','171':'','181':''}),
+    FRT:allBaseFRT({'서브1':'','101':'','102':'','161':'','171':'','181':''}),
     RR:allBase({'101':'','103':'','151':'','161':'','171':'','181':'','191':'20~30'})
   },
   '2LINE':{
-    FRT:allBaseFRT({'서브1':'','101':'15~40','103':'25~40','151':'','181':'','191':''}),
-    RR:Object.assign(allBase({'101':'','102':'','103':'','111':'25~40','151':'','171':'25~40','181':'','191':''}),{'103-2':''})
+    FRT:allBaseFRT({'서브1':'25~40','101':'25~40','103':'25~40','151':'','181':'','191':''}),
+    RR:Object.assign(allBase({'101':'','102':'','111':'25~40','151':'','171':'25~40','181':'','191':''}),{'103-2':'25~40'})
   }
 };
 const SECTIONS_1LINE = [
@@ -480,7 +480,7 @@ function fillAllBase(){
   const rec=cur(); if(!rec) return;
   const v=(prompt('모든 기준값을 이 값으로 채웁니다 (특수값 35~51, 20~25 제외)\n예: 13~20', '13~20')||'').trim();
   if(!v) return;
-  const SPECIAL=['35~51','20~25','35~51kgf','20~25kgf','20~30'];
+  const SPECIAL=['35~51','20~25','25~40','15~40','35~51kgf','20~25kgf','20~30'];
   COLS_FRT.forEach(c=>{
     const cv=rec.base.FRT[c];
     if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base.FRT[c]=v;
@@ -988,6 +988,28 @@ async function initMonthlyRecords(){
     SETTINGS.dataVersion=8;
     await saveSettings();
     console.log('V8 마이그레이션 완료: 전체 레코드 기준값 재확인');
+  }
+
+  // ── V9 마이그레이션: 스크린샷 기준값으로 전체 반영 ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<9){
+    ['1LINE','2LINE'].forEach(line=>{
+      const def=JSON.parse(JSON.stringify(DEFAULT_BASE[line]));
+      const rrCols=getSections(line).find(s=>s.key==='RR').cols;
+      months.forEach(ym=>{
+        const rec=DB[line].records[ym]; if(!rec) return;
+        if(!rec.base.FRT) rec.base.FRT={}; if(!rec.base.RR) rec.base.RR={};
+        if(!rec.meas.FRT) rec.meas.FRT={}; if(!rec.meas.RR) rec.meas.RR={};
+        COLS_FRT.forEach(c=>{ rec.base.FRT[c]=def.FRT[c]; if(def.FRT[c]==='') delete rec.meas.FRT[c]; });
+        rrCols.forEach(c=>{ rec.base.RR[c]=def.RR[c]??''; if((def.RR[c]??'')==='') delete rec.meas.RR[c]; });
+        toSave.push({line,ym});
+      });
+    });
+    if(!TEMPLATE) TEMPLATE={};
+    ['1LINE','2LINE'].forEach(line=>{ TEMPLATE[line]=JSON.parse(JSON.stringify(DEFAULT_BASE[line])); });
+    SETTINGS.template=TEMPLATE;
+    SETTINGS.dataVersion=9;
+    await saveSettings();
+    console.log('V9 마이그레이션 완료: 새 기준값 전체 적용');
   }
 
   ['1LINE','2LINE'].forEach(line=>{
