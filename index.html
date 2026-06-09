@@ -295,25 +295,30 @@ const firebaseConfig = {
 </script>
 
 <script>
-const COLS = ['101','102','103','103-2','111','121','131','141','151','161','171','181','191'];
+const COLS = ['101','102','103','111','121','131','141','151','161','171','181','191'];
+const COLS_RR_2LINE = ['101','102','103','103-2','111','121','131','141','151','161','171','181','191'];
 const COLS_FRT = ['서브1','101','102','103','111','121','131','141','151','161','171','181','191'];
 function allBase(special){ const o={}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 function allBaseFRT(special){ const o={'서브1':'13~20'}; COLS.forEach(c=>o[c]='13~20'); return Object.assign(o, special||{}); }
 const DEFAULT_BASE = {
   '1LINE':{
     FRT:allBaseFRT({'서브1':'20~25','101':'','102':'','161':'','171':'','181':''}),
-    RR:allBase({'101':'','103':'','103-2':'','151':'','161':'','171':'','181':'','191':'20~30'})
+    RR:allBase({'101':'','103':'','151':'','161':'','171':'','181':'','191':'20~30'})
   },
   '2LINE':{
     FRT:allBaseFRT({'서브1':'','101':'15~40','103':'25~40','151':'','181':'','191':''}),
-    RR:allBase({'101':'','102':'','103':'','103-2':'','111':'25~40','151':'','171':'25~40','181':'','191':''})
+    RR:Object.assign(allBase({'101':'','102':'','103':'','111':'25~40','151':'','171':'25~40','181':'','191':''}),{'103-2':''})
   }
 };
-const SECTIONS = [
+const SECTIONS_1LINE = [
   {key:'FRT', label:'FRT', cols:COLS_FRT},
   {key:'RR',  label:'RR',  cols:COLS},
 ];
-function getSections(line){ return SECTIONS; }
+const SECTIONS_2LINE = [
+  {key:'FRT', label:'FRT', cols:COLS_FRT},
+  {key:'RR',  label:'RR',  cols:COLS_RR_2LINE},
+];
+function getSections(line){ return line==='2LINE'?SECTIONS_2LINE:SECTIONS_1LINE; }
 
 let TEMPLATE=null; // Firestore settings/dashboard.template 에서 로드
 function getDefaultBase(line){
@@ -479,7 +484,7 @@ function fillAllBase(){
     const cv=rec.base.FRT[c];
     if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base.FRT[c]=v;
   });
-  COLS.forEach(c=>{
+  getSections(curLine).find(s=>s.key==='RR').cols.forEach(c=>{
     const cv=rec.base.RR[c];
     if(cv!==undefined&&cv!==''&&!SPECIAL.includes(cv)) rec.base.RR[c]=v;
   });
@@ -691,8 +696,9 @@ function openSettings(){
   ['1LINE','2LINE'].forEach(line=>{
     settingsDraft[line]={FRT:{},RR:{}};
     const src=(TEMPLATE&&TEMPLATE[line])?TEMPLATE[line]:DEFAULT_BASE[line];
-    COLS_FRT.forEach(c=>{ settingsDraft[line].FRT[c]=src.FRT[c]??''; });
-    COLS.forEach(c=>{ settingsDraft[line].RR[c]=src.RR[c]??''; });
+    getSections(line).forEach(sec=>{
+      sec.cols.forEach(c=>{ settingsDraft[line][sec.key][c]=src[sec.key]?.[c]??''; });
+    });
   });
   settingsLine='1LINE';
   renderSettings();
@@ -757,13 +763,11 @@ async function saveTemplate(){
       const tmpl=TEMPLATE[line]; if(!tmpl) return;
       Object.keys(DB[line].records).forEach(ym=>{
         const rec=DB[line].records[ym];
-        COLS_FRT.forEach(c=>{
-          rec.base.FRT[c]=tmpl.FRT[c];
-          if(tmpl.FRT[c]==='') delete rec.meas.FRT[c];
-        });
-        COLS.forEach(c=>{
-          rec.base.RR[c]=tmpl.RR[c];
-          if(tmpl.RR[c]==='') delete rec.meas.RR[c];
+        getSections(line).forEach(sec=>{
+          sec.cols.forEach(c=>{
+            rec.base[sec.key][c]=tmpl[sec.key]?.[c]??'';
+            if((tmpl[sec.key]?.[c]??'')==='') delete rec.meas[sec.key][c];
+          });
         });
         toSave.push({line,ym});
       });
@@ -781,13 +785,11 @@ async function applyTemplateToAll(){
     const tmpl=settingsDraft[line];
     Object.keys(DB[line].records).forEach(ym=>{
       const rec=DB[line].records[ym];
-      COLS_FRT.forEach(c=>{
-        rec.base.FRT[c]=tmpl.FRT[c];
-        if(tmpl.FRT[c]==='') delete rec.meas.FRT[c];
-      });
-      COLS.forEach(c=>{
-        rec.base.RR[c]=tmpl.RR[c];
-        if(tmpl.RR[c]==='') delete rec.meas.RR[c];
+      getSections(line).forEach(sec=>{
+        sec.cols.forEach(c=>{
+          rec.base[sec.key][c]=tmpl[sec.key]?.[c]??'';
+          if((tmpl[sec.key]?.[c]??'')==='') delete rec.meas[sec.key][c];
+        });
       });
       toSave.push({line,ym});
     });
@@ -916,9 +918,9 @@ async function initMonthlyRecords(){
         rec.base.FRT[c]=def2v5.FRT[c];
         if(def2v5.FRT[c]==='') delete rec.meas.FRT[c];
       });
-      COLS.forEach(c=>{
-        rec.base.RR[c]=def2v5.RR[c];
-        if(def2v5.RR[c]==='') delete rec.meas.RR[c];
+      COLS_RR_2LINE.forEach(c=>{
+        rec.base.RR[c]=def2v5.RR[c]??'';
+        if((def2v5.RR[c]??'')==='') delete rec.meas.RR[c];
       });
       toSave.push({line:'2LINE',ym});
     });
@@ -942,6 +944,20 @@ async function initMonthlyRecords(){
     SETTINGS.dataVersion=6;
     await saveSettings();
     console.log('V6 마이그레이션 완료: 자동생성 실측값 삭제');
+  }
+
+  // ── V7 마이그레이션: 1LINE 기록에서 103-2 컬럼 삭제 ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<7){
+    months.forEach(ym=>{
+      const rec=DB['1LINE'].records[ym]; if(!rec) return;
+      delete rec.base.RR['103-2']; delete rec.meas.RR['103-2'];
+      toSave.push({line:'1LINE',ym});
+    });
+    if(TEMPLATE&&TEMPLATE['1LINE']&&TEMPLATE['1LINE'].RR) delete TEMPLATE['1LINE'].RR['103-2'];
+    if(TEMPLATE) SETTINGS.template=TEMPLATE;
+    SETTINGS.dataVersion=7;
+    await saveSettings();
+    console.log('V7 마이그레이션 완료: 1LINE RR 103-2 삭제');
   }
 
   ['1LINE','2LINE'].forEach(line=>{
@@ -971,7 +987,7 @@ async function initMonthlyRecords(){
       // 1LINE 공란 위치 강제 적용
       if(line==='1LINE'){
         ['101','102','161','171','181'].forEach(c=>{rec.base.FRT[c]='';delete rec.meas.FRT[c];});
-        ['101','103','103-2','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
+        ['101','103','151','161','171','181'].forEach(c=>{rec.base.RR[c]='';delete rec.meas.RR[c];});
       }
       // RR 191 라인별 처리
       if(line==='1LINE'){
