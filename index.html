@@ -1012,6 +1012,29 @@ async function initMonthlyRecords(){
     console.log('V9 마이그레이션 완료: 새 기준값 전체 적용');
   }
 
+  // ── V10 마이그레이션: 실측값 재생성 ──
+  if(!SETTINGS.dataVersion||SETTINGS.dataVersion<10){
+    months.forEach((ym,mi)=>{
+      ['1LINE','2LINE'].forEach(line=>{
+        const rec=DB[line].records[ym]; if(!rec) return;
+        const secs=getSections(line);
+        let ci=0;
+        secs.forEach(sec=>{
+          sec.cols.forEach(c=>{
+            const base=rec.base[sec.key]?.[c]??'';
+            if(base===''){delete (rec.meas[sec.key]||{})[c]; ci++; return;}
+            rec.meas[sec.key][c]=autoMeasVal(base,(mi+1)*1000+(line==='2LINE'?500:0)+ci);
+            ci++;
+          });
+        });
+        toSave.push({line,ym});
+      });
+    });
+    SETTINGS.dataVersion=10;
+    await saveSettings();
+    console.log('V10 마이그레이션 완료: 실측값 재생성');
+  }
+
   ['1LINE','2LINE'].forEach(line=>{
     months.forEach((ym,mi)=>{
       const isNew=!DB[line].records[ym];
